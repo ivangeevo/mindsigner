@@ -20,9 +20,9 @@ import java.security.cert.X509Certificate;
 public class CraftSocketServer {
 
     private static final int PORT = 8080;
-    private static final String KEYSTORE_PATH = "./src/main/java/resources/keystore.jks";
+    private static final String KEYSTORE_PATH = "./craftsocketclient/keystore.jks";
     private static final String KEYSTORE_PASSWORD = "password";
-    private static final String TRUSTSTORE_PATH = "./src/main/java/resources/truststore.jks";
+    private static final String TRUSTSTORE_PATH = "./craftsocketclient/truststore.jks";
     private static final String TRUSTSTORE_PASSWORD = "password";
 
     public CraftSocketServer(int port, boolean b) {
