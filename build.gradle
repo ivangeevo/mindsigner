@@ -127,6 +127,11 @@ repositories {
 }
 
 dependencies {
+    implementation 'org.java-websocket:Java-WebSocket:1.5.3'
+    implementation 'org.java-websocket:Java-WebSocket:1.5.3'
+    implementation 'org.kie.server:kie-server-controller-websocket:7.73.0.Final'
+    implementation 'org.kie.server:kie-server-controller-websocket:7.73.0.Final'
+
 
     // Specify the version of Minecraft to use. If this is any group other than 'net.minecraft' it is assumed
     // that the dep is a ForgeGradle 'patcher' dependency, and its patches will be applied.
@@ -147,7 +152,7 @@ dependencies {
     implementation 'org.bouncycastle:bcmail-jdk15to18:1.73'
     runtimeOnly 'org.bouncycastle:bctls-jdk15to18:1.73'
 
-
+    implementation 'io.socket:socket.io-client:1.0.0'
 
     // Real mod deobf dependency examples - these get remapped to your current mappings
     // compileOnly fg.deobf("mezz.jei:jei-${mc_version}:${jei_version}:api") // Adds JEI API as a compile dependency

@@ -1,40 +1,72 @@
 package hive.ivangeevo.mindsigner;
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
-import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.websocketx.*;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
+import org.apache.http.protocol.HttpRequestHandler;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import java.io.PrintStream;
+import java.security.cert.X509Certificate;
 
+import static io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler.ServerHandshakeStateEvent;
 
 public class CraftSocketServerHandler extends SimpleChannelInboundHandler<Object> {
+    private final WebSocketServerHandshakerFactory wsFactory;
     private WebSocketServerHandshaker handshaker;
+    private static final String WEBSOCKET_PATH = "/websocket";
+    private SslContext sslCtx;
 
-    @Override
-    protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (msg instanceof FullHttpRequest) {
-            // Handle HTTP request.
-            handleHttpRequest(ctx, (FullHttpRequest) msg);
-        } else if (msg instanceof WebSocketFrame) {
-            // Handle WebSocket frame.
-            handleWebSocketFrame(ctx, (WebSocketFrame) msg);
-        }
+    public CraftSocketServerHandler(WebSocketServerHandshakerFactory wsFactory, SslContext sslCtx) {
+        this.wsFactory = wsFactory;
+        this.sslCtx = sslCtx;
+    }
+
+    public CraftSocketServerHandler(char[] keystorePassword, X509Certificate[] truststore, WebSocketServerHandshakerFactory wsFactory) {
+        this.wsFactory = wsFactory;
+    }
+
+    public static X509Certificate[] loadCertificates(String truststorePath, String truststorePassword) {
+        return new X509Certificate[0];
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        // Send greeting for a new connection.
-        ctx.writeAndFlush(new TextWebSocketFrame("Welcome to the CraftSocketServer!"));
+        Channel incoming = ctx.channel();
+        System.out.println("Client " + incoming.remoteAddress() + " connected");
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        // Print farewell message when client disconnects.
-        System.out.println("WebSocket Client disconnected: " + ctx.channel());
+        System.out.println("WebSocket Client disconnected!");
+    }
+
+    @Override
+    protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
+        if (msg instanceof HttpRequest) {
+            // Handshake
+            WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(
+                    getWebSocketLocation((HttpRequest) msg),
+                    null,  // subprotocols (null means no subprotocols)
+                    true   // allow extensions
+            );
+
+            handshaker = wsFactory.newHandshaker((HttpRequest) msg);
+            if (msg instanceof FullHttpRequest) {
+                handshaker.handshake(ctx.channel(), (FullHttpRequest) msg);
+            } else {
+                handshaker.handshake(ctx.channel(), (HttpRequest) msg);
+            }
+        }
+    }
+
+    private String getWebSocketLocation(HttpRequest msg) {
+        return null;
     }
 
     @Override
@@ -43,41 +75,31 @@ public class CraftSocketServerHandler extends SimpleChannelInboundHandler<Object
         ctx.close();
     }
 
-    private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest req) throws Exception {
-        // Handshake the WebSocket connection.
-        WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(
-                getWebSocketURL(req), null, true, 65536);
-        handshaker = wsFactory.newHandshaker(req);
-        if (handshaker == null) {
-            WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
-        } else {
-            handshaker.handshake(ctx.channel(), req);
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        if (evt instanceof IdleStateEvent) {
+            IdleStateEvent event = (IdleStateEvent) evt;
+            if (event.state() == IdleState.READER_IDLE) {
+                System.out.println("Reader idle, closing channel");
+                ctx.close();
+            }
         }
     }
 
-    private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
-        if (frame instanceof TextWebSocketFrame) {
-            // Handle text frame.
-            String command = ((TextWebSocketFrame) frame).text();
-            String result = executeCommand(command);
-            ctx.writeAndFlush(new TextWebSocketFrame(result));
-        } else {
-            throw new UnsupportedOperationException(String.format("%s frame types not supported", frame.getClass().getName()));
+    private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
+        // Check for closing frame
+        if (frame instanceof CloseWebSocketFrame) {
+            handshaker.close(ctx.channel(), (CloseWebSocketFrame) frame.retain());
+            return;
         }
-    }
 
-    private String executeCommand(String command) {
-        // Execute the command and return the result.
-        // Replace this with your own implementation.
-        return "Command executed: " + command;
-    }
-
-    private String getWebSocketURL(FullHttpRequest req) {
-        String protocol = "ws";
-        if (req.headers().contains("X-Forwarded-Proto") && req.headers().get("X-Forwarded-Proto").equalsIgnoreCase("https")) {
-            protocol = "wss";
+        // Ping frame
+        if (frame instanceof PingWebSocketFrame) {
+            ctx.channel().write(new PongWebSocketFrame(frame.content().retain()));
+            return;
         }
-        return protocol + "://" + req.headers().get("Host") + req.uri();
+        // Send the response back.
+        String request = ((TextWebSocketFrame) frame).text();
+        PrintStream out = System.out;
     }
 }
-
