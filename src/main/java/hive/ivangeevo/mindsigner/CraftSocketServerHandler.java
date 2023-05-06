@@ -1,105 +1,93 @@
 package hive.ivangeevo.mindsigner;
 
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.websocketx.*;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
-import org.apache.http.protocol.HttpRequestHandler;
 
-import java.io.PrintStream;
-import java.security.cert.X509Certificate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import static io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler.ServerHandshakeStateEvent;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 
-public class CraftSocketServerHandler extends SimpleChannelInboundHandler<Object> {
-    private final WebSocketServerHandshakerFactory wsFactory;
-    private WebSocketServerHandshaker handshaker;
-    private static final String WEBSOCKET_PATH = "/websocket";
-    private SslContext sslCtx;
+public class CraftSocketServerHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
 
-    public CraftSocketServerHandler(WebSocketServerHandshakerFactory wsFactory, SslContext sslCtx) {
-        this.wsFactory = wsFactory;
+    private static final Logger logger = Logger.getLogger(WebSocketServerProtocolHandler.class.getName());
+
+    private final WebSocketServerHandshaker handshaker;
+    private final SslContext sslCtx;
+
+    public CraftSocketServerHandler(char[] keystorePassword, WebSocketServerHandshaker handshaker, SslContext sslCtx) {
+        this.handshaker = handshaker;
         this.sslCtx = sslCtx;
     }
 
-    public CraftSocketServerHandler(char[] keystorePassword, X509Certificate[] truststore, WebSocketServerHandshakerFactory wsFactory) {
-        this.wsFactory = wsFactory;
+    // No-argument constructor
+    public CraftSocketServerHandler() {
+        this.handshaker = null;
+        this.sslCtx = null;
     }
 
-    public static X509Certificate[] loadCertificates(String truststorePath, String truststorePassword) {
-        return new X509Certificate[0];
-    }
+    public CraftSocketServerHandler(WebSocketServerHandshaker handshaker, SslContext sslCtx) {
+        this.handshaker = handshaker;
 
-    @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        Channel incoming = ctx.channel();
-        System.out.println("Client " + incoming.remoteAddress() + " connected");
-    }
-
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("WebSocket Client disconnected!");
-    }
-
-    @Override
-    protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (msg instanceof HttpRequest) {
-            // Handshake
-            WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(
-                    getWebSocketLocation((HttpRequest) msg),
-                    null,  // subprotocols (null means no subprotocols)
-                    true   // allow extensions
-            );
-
-            handshaker = wsFactory.newHandshaker((HttpRequest) msg);
-            if (msg instanceof FullHttpRequest) {
-                handshaker.handshake(ctx.channel(), (FullHttpRequest) msg);
-            } else {
-                handshaker.handshake(ctx.channel(), (HttpRequest) msg);
-            }
-        }
-    }
-
-    private String getWebSocketLocation(HttpRequest msg) {
-        return null;
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        cause.printStackTrace();
-        ctx.close();
+        this.sslCtx = sslCtx;
     }
 
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-        if (evt instanceof IdleStateEvent) {
-            IdleStateEvent event = (IdleStateEvent) evt;
+        if (evt instanceof IdleStateEvent event) {
             if (event.state() == IdleState.READER_IDLE) {
-                System.out.println("Reader idle, closing channel");
                 ctx.close();
             }
+        } else {
+            super.userEventTriggered(ctx, evt);
         }
     }
 
-    private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
-        // Check for closing frame
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) {
+        // Send a welcome message when a new client connects
+        String message = "Welcome to the WebSocket server!";
+        WebSocketFrame frame = new TextWebSocketFrame(message);
+        ctx.writeAndFlush(frame);
+
+        logger.info("Client connected: " + ctx.channel().remoteAddress());
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx)  {
+        logger.info("Client disconnected: " + ctx.channel().remoteAddress());
+    }
+
+    @Override
+    protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame frame)  {
         if (frame instanceof CloseWebSocketFrame) {
             handshaker.close(ctx.channel(), (CloseWebSocketFrame) frame.retain());
             return;
         }
 
-        // Ping frame
         if (frame instanceof PingWebSocketFrame) {
             ctx.channel().write(new PongWebSocketFrame(frame.content().retain()));
             return;
         }
-        // Send the response back.
-        String request = ((TextWebSocketFrame) frame).text();
-        PrintStream out = System.out;
+
+        if (!(frame instanceof TextWebSocketFrame)) {
+            throw new UnsupportedOperationException(String.format("%s frame types not supported", frame.getClass().getName()));
+        }
+
+        String message = ((TextWebSocketFrame) frame).text();
+        logger.info(String.format("%s received %s", ctx.channel(), message));
+        ctx.channel().write(new TextWebSocketFrame("Server received: " + message));
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)  {
+        logger.log(Level.WARNING, "Exception caught", cause);
+        ctx.close();
     }
 }

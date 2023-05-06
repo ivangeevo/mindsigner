@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@hiveio/dhive": "^1.2.6",
+    "ws": "^8.13.0"
+  },
+  "type": "module"
+}

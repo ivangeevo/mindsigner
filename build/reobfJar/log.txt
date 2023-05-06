@@ -7,12 +7,8 @@ Classpath:
  - C:\Users\billi\.gradle\caches\forge_gradle\minecraft_user_repo\net\minecraftforge\forge\1.18.2-40.2.2_mapped_official_1.18.2\forge-1.18.2-40.2.2_mapped_official_1.18.2-recomp.jar
  - C:\Users\billi\.gradle\caches\forge_gradle\minecraft_repo\versions\1.18.2\client-extra.jar
  - C:\Users\billi\.gradle\caches\modules-2\files-2.1\io.netty\netty-all\4.1.92.Final\3af6c651f6fdd1d7ed49a27ad59397c75af3d278\netty-all-4.1.92.Final.jar
- - C:\Users\billi\.gradle\caches\modules-2\files-2.1\org.bouncycastle\bcmail-jdk15to18\1.73\35ae5f7ab691c01f63106b880a83898de4dda9a0\bcmail-jdk15to18-1.73.jar
- - C:\Users\billi\.gradle\caches\modules-2\files-2.1\org.bouncycastle\bcpkix-jdk15to18\1.73\7673fe0f3510e88232c4bd98d027e9e0a3d0af6d\bcpkix-jdk15to18-1.73.jar
- - C:\Users\billi\.gradle\caches\modules-2\files-2.1\org.bouncycastle\bcutil-jdk15to18\1.73\7d0000652826c7215c85d1e482457a4423f7e157\bcutil-jdk15to18-1.73.jar
- - C:\Users\billi\.gradle\caches\modules-2\files-2.1\org.bouncycastle\bcprov-jdk15to18\1.73\513654037023b0c305fd6786ea44ae7545802180\bcprov-jdk15to18-1.73.jar
- - C:\Users\billi\.gradle\caches\modules-2\files-2.1\org.bouncycastle\bcprov-ext-jdk15to18\1.73\d926a89dde8d133d6d55de5b3e4e46d80f497ca2\bcprov-ext-jdk15to18-1.73.jar
  - C:\Users\billi\.gradle\caches\modules-2\files-2.1\io.socket\socket.io-client\1.0.0\28dde99672ed62a85e85a7df096c6bec698785b4\socket.io-client-1.0.0.jar
+ - C:\Users\billi\.gradle\caches\modules-2\files-2.1\javax.websocket\javax.websocket-api\1.1\eeeb68631711256418dfbb47b11c731b6c8f6235\javax.websocket-api-1.1.jar
  - C:\Users\billi\.gradle\caches\modules-2\files-2.1\org.kie.server\kie-server-controller-impl\7.73.0.Final\f520a26ee1763541a571d1c884b5a486b95f4e9b\kie-server-controller-impl-7.73.0.Final.jar
  - C:\Users\billi\.gradle\caches\modules-2\files-2.1\org.kie.server\kie-server-controller-websocket-common\7.73.0.Final\b19f34ee69fdc5d4c332de93e84912ff4be5528c\kie-server-controller-websocket-common-7.73.0.Final.jar
  - C:\Users\billi\.gradle\caches\modules-2\files-2.1\org.kie.server\kie-server-controller-api\7.73.0.Final\998201904576486602982cbcdbf66fe68c1cc107\kie-server-controller-api-7.73.0.Final.jar
