@@ -1,72 +1,139 @@
 package hive.ivangeevo.mindsigner;
 
+import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelPipeline;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.*;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
+import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolConfig;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
+import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
+import io.netty.handler.stream.ChunkedWriteHandler;
 
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLEngine;
-import java.security.cert.X509Certificate;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.FileInputStream;
+import java.security.KeyStore;
 
-public class CraftSocketServer {
+import io.netty.handler.codec.http.HttpRequest;
 
-    private static final int PORT = 8080;
-    private static final String KEYSTORE_PATH = "./craftsocketclient/keystore.jks";
-    private static final String KEYSTORE_PASSWORD = "password";
-    private static final String TRUSTSTORE_PATH = "./craftsocketclient/truststore.jks";
-    private static final String TRUSTSTORE_PASSWORD = "password";
+import java.io.File;
+import java.net.InetSocketAddress;
+import java.security.KeyStoreException;
+import java.security.cert.CertificateException;
 
-    public CraftSocketServer(int port, boolean b) {
+import static com.google.common.net.HttpHeaders.HOST;
+import static io.netty.handler.codec.rtsp.RtspHeaderValues.PORT;
+
+public class CraftSocketServer implements Runnable {
+    private final int port;
+
+    public CraftSocketServer(int port) {
+        this.port = port;
     }
 
-    public static void main(String[] args) throws Exception {
-
-        // Generate a self-signed certificate
-        SelfSignedCertificate ssc = new SelfSignedCertificate();
-        SslContext sslCtx = SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey()).build();
-
-        // Create the server bootstrap
-        ServerBootstrap serverBootstrap = new ServerBootstrap();
-
-        // Configure the server bootstrap
-        serverBootstrap.channel(NioServerSocketChannel.class)
-                .childHandler(new ChannelInitializer<SocketChannel>() {
-                    @Override
-                    protected void initChannel(SocketChannel ch) throws Exception {
-                        ChannelPipeline pipeline = ch.pipeline();
-
-                        // Add SSL handler to pipeline
-                        SSLEngine sslEngine = sslCtx.newEngine(ch.alloc());
-                        pipeline.addLast(new SslHandler(sslEngine));
-
-                        // Add HTTP codecs to pipeline
-                        pipeline.addLast(new HttpServerCodec());
-                        pipeline.addLast(new HttpObjectAggregator(65536));
-
-                        // Add WebSocket server protocol handler to pipeline
-                        pipeline.addLast(new WebSocketServerProtocolHandler("/websocket"));
-
-                        // Add custom handler to pipeline
-                        char[] keystorePassword = KEYSTORE_PASSWORD.toCharArray();
-                        X509Certificate[] truststore = CraftSocketServerHandler.loadCertificates(TRUSTSTORE_PATH, TRUSTSTORE_PASSWORD);
-                        WebSocketServerHandshakerFactory wsFactory = null;
-                        pipeline.addLast(new CraftSocketServerHandler(keystorePassword, truststore, null));
-                    }
-                });
-
-        // Start the server
-        serverBootstrap.bind(PORT).sync().channel().closeFuture().sync();
+    public CraftSocketServer(int port, Object o) {
     }
 
+    @Override
     public void run() {
+        // Load keystore
+        KeyStore ks = null;
+        try {
+            ks = KeyStore.getInstance("PKCS12");
+        } catch (KeyStoreException e) {
+            throw new RuntimeException(e);
+        }
+        try (FileInputStream fis = new FileInputStream("./craftsocketclient/keystore.p12")) {
+            ks.load(fis, "password".toCharArray());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+        KeyManagerFactory kmf;
+        try {
+            kmf = KeyManagerFactory.getInstance("SunX509");
+            kmf.init(ks, "password".toCharArray());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+
+        // Load truststore
+        KeyStore ts = null;
+        try {
+            ts = KeyStore.getInstance("JKS");
+        } catch (KeyStoreException e) {
+            throw new RuntimeException(e);
+        }
+        try (FileInputStream fis = new FileInputStream("./craftsocketclient/truststore.jks")) {
+            ts.load(fis, "password".toCharArray());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+        TrustManagerFactory tmf;
+        try {
+            tmf = TrustManagerFactory.getInstance("SunX509");
+            tmf.init(ts);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+        // Create SSL context
+        SslContext sslCtx = null;
+        try {
+            sslCtx = SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build();
+        } catch (SSLException e) {
+// Handle SSL context creation failure
+            e.printStackTrace();
+        }
+
+// Set up Netty client bootstrap
+        EventLoopGroup group = new NioEventLoopGroup();
+        try {
+            Bootstrap b = new Bootstrap();
+            b.group(group)
+                    .channel(NioSocketChannel.class)
+                    .option(ChannelOption.TCP_NODELAY, true)
+                    .handler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel ch) throws Exception {
+                            ChannelPipeline p = ch.pipeline();
+// Add SSL handler
+                            p.addLast(sslCtx.newHandler(ch.alloc()));
+// Add custom message encoder and decoder
+                            p.addLast(new CustomMessageEncoder());
+                            p.addLast(new CustomMessageDecoder());
+// Add business logic handler
+                            p.addLast(new CustomClientHandler());
+                        }
+                    });
+            // Start the client
+            ChannelFuture f = b.connect().sync();
+
+// Wait until the connection is closed
+            f.channel().closeFuture().sync();
+        } catch (InterruptedException e) {
+// Handle client startup/shutdown interruption
+            e.printStackTrace();
+        } finally {
+// Shut down the event loop group
+            group.shutdownGracefully();
+        }
     }
 }
