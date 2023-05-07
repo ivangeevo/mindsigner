@@ -46,16 +46,7 @@ public class Mindsigner {
     }
 
     private void setup(final FMLCommonSetupEvent event) {
-        int port = 8080;
-        try {
-            // Create a new CraftSocketServer object and start it in a separate thread
-            CraftSocketServer server = new CraftSocketServer(port, true);
-            server.start();
 
-            LOGGER.info("Websocket Started and listening on localhost:8080");
-        } catch (Exception e) {
-            LOGGER.error("Failed to start websocket server", e);
-        }
 
         // Some preinit code
         LOGGER.info("HELLO FROM PREINIT");
@@ -86,6 +77,17 @@ public class Mindsigner {
 
     @SubscribeEvent
     public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        int port = 8080;
+        try {
+            // Create a new CraftSocketServer object and start it in a separate thread
+            CraftSocketServer server = new CraftSocketServer(port);
+            server.run();
+
+            LOGGER.info("Websocket Started and listening on localhost:8080");
+        } catch (Exception e) {
+            LOGGER.error("Failed to start websocket server", e);
+        }
+
         if (event.getPlayer() instanceof ServerPlayer) {
             if (socketServer != null && socketServer.isRunning()) {
                 TextComponent message = new TextComponent("WebSocket server started and listening on localhost:8080");
@@ -96,9 +98,8 @@ public class Mindsigner {
 
         if (socketServer == null) {
             try {
-                int port = 8080;
-                socketServer = new CraftSocketServer(port, true);
-                socketServer.start();
+                socketServer = new CraftSocketServer(port);
+                socketServer.run();
 
                 LOGGER.info("WebSocket server started and listening on localhost:8080");
 

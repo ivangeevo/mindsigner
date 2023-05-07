@@ -65,14 +65,15 @@ public class CraftSocketServerHandler extends SimpleChannelInboundHandler<WebSoc
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame frame)  {
+    protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame frame) {
         if (frame instanceof CloseWebSocketFrame) {
+            assert handshaker != null;
             handshaker.close(ctx.channel(), (CloseWebSocketFrame) frame.retain());
             return;
         }
 
         if (frame instanceof PingWebSocketFrame) {
-            ctx.channel().write(new PongWebSocketFrame(frame.content().retain()));
+            ctx.channel().writeAndFlush(new PongWebSocketFrame(frame.content().retain()));
             return;
         }
 
@@ -82,8 +83,9 @@ public class CraftSocketServerHandler extends SimpleChannelInboundHandler<WebSoc
 
         String message = ((TextWebSocketFrame) frame).text();
         logger.info(String.format("%s received %s", ctx.channel(), message));
-        ctx.channel().write(new TextWebSocketFrame("Server received: " + message));
+        ctx.channel().writeAndFlush(new TextWebSocketFrame("Server received: " + message));
     }
+
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)  {
