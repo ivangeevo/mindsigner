@@ -8,11 +8,14 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+
+import javax.net.ssl.SSLContext;
+import org.glassfish.tyrus.core.TyrusServerEndpointConfig;
+
 public class CraftSocketServer {
     private ServerSocket serverSocket;
+    
 
-    public CraftSocketServer(int port, boolean b) {
-    }
 
     public void start() throws IOException {
 

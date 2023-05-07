@@ -1,29 +1,45 @@
- <center>Mindsigner</center>
-***
+# <center>Mindsigner
 
 
-### Mindsigner is an minecraft mod that allows connection with the Hive Blockchain. 
+
+### Mindsigner is a minecraft mod that allows connection with the Hive Blockchain. 
+
 Features:
 ***
-### v0.0.22
+### v0.0.31 
+Experimenting with ChannelHandler to route websocket traffic to in-game chat.
+
+### v0.0.3
+Working Websocket Server connnection finally/
+Removed CraftSocketServerHandler and other unused stuff.
+
+Alpha means that its atleast functional right, I guess it's not ture Alpha then, but at least the Websocket runs. xD
+
+# Alpha
+
+### v0023pa
+added Server Endpoint & Testing
+
+### v0022pa
 Changed the schema for the connection / added plan for connection path in README.md
 
-### v.0.0.2 
+### v0020pa
 made a working websocket connection
 
-### v0.0.16
+### v0016pa
 testing with websockets & Authentication
 
-### v0.0.15
+### v0015pa
 
 Optimizing code, changed to Netty only instead of BouncyCastle.
 
- ### v0.0.14
+ ### v0014pa
  
 /added OpenSSL, Netty and testing BouncyCastle
 
-### v0.0.1
-
+### v0001pa
+Start of project
+***
 ## Pre-Alpha
 
 
