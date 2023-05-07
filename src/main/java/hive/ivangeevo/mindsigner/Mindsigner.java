@@ -134,6 +134,11 @@ public class Mindsigner {
 
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
+
+    }
+
+    @SubscribeEvent
+    public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         int port = 8080;
         try {
             ServerSocket serverSocket = new ServerSocket(port, 0, InetAddress.getByName("localhost"));
@@ -150,11 +155,6 @@ public class Mindsigner {
             }, 0, 100, TimeUnit.MILLISECONDS);
         } catch (IOException e) {
             LOGGER.error("Failed to start CraftSocketServer", e);
-        }
-    }
-
-    @SubscribeEvent
-    public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getPlayer() instanceof ServerPlayer) {
             if (socketServer != null && socketServer.isRunning()) {
                 TextComponent message = new TextComponent("WebSocket server started and listening on localhost:8080");
@@ -165,15 +165,7 @@ public class Mindsigner {
         if (socketServer == null)
 
             try {
-                int port = 8080;
-                socketServer = new CraftSocketServer();
-                socketServer.start();
 
-                LOGGER.info("WebSocket server started and listening on localhost:8080");
-
-                // Send a chat message to the player
-                TextComponent message = new TextComponent("WebSocket server started and listening on localhost:8080");
-                event.getPlayer().sendMessage(message, dummyUUID);
             } catch (Exception e) {
                 LOGGER.error("Failed to start websocket server", e);
             }
