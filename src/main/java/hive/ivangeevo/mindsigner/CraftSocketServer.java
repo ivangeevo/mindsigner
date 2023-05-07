@@ -1,36 +1,16 @@
 package hive.ivangeevo.mindsigner;
 
+import jakarta.websocket.DeploymentException;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-
-
-import javax.net.ssl.SSLContext;
-import org.glassfish.tyrus.core.TyrusServerEndpointConfig;
+import org.glassfish.tyrus.server.Server;
 
 public class CraftSocketServer {
-    private ServerSocket serverSocket;
-    
 
-
-    public void start() throws IOException {
-
-    }
-
-    public Socket accept() throws IOException {
-        return serverSocket.accept();
-    }
-
-    public void stop() throws IOException {
-        serverSocket.close();
-    }
-
-    public boolean isRunning() {
-        return true;
+    public void start() throws DeploymentException {
+        Server server = new Server("localhost", 8080, "/websocket", null, CraftSocketEndpoint.class);
+        server.start();
     }
 
     @SubscribeEvent
@@ -38,19 +18,17 @@ public class CraftSocketServer {
         // Start the server on a separate thread
         new Thread(() -> {
             try {
-                ServerSocket serverSocket = new ServerSocket(8080, 0, InetAddress.getByName("localhost"));
-                System.out.println("CraftSocketServer started on port " + serverSocket.getLocalPort());
-
-                while (true) {
-                    Socket clientSocket = serverSocket.accept();
-                    System.out.println("Client connected from " + clientSocket.getInetAddress().getHostAddress());
-
-                    // Handle the incoming clientSocket here
-                }
-            } catch (IOException e) {
+                start();
+            } catch (DeploymentException e) {
                 e.printStackTrace();
             }
         }).start();
     }
-}
 
+    public boolean isRunning() {
+        return false;
+    }
+
+    public void stop() {
+    }
+}

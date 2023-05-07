@@ -24,7 +24,7 @@ public class CraftSocketEndpoint {
 
     public static class CraftSocketEndpointConfig implements TyrusServerEndpointConfig {
         public static void main(String[] args) {
-            String serverUrl = "ws://localhost:8080/my-endpoint";
+            String serverUrl = "wss://localhost:8080/my-endpoint";
             Endpoint endpoint = new Endpoint() {
                 @Override
                 public void onOpen(Session session, EndpointConfig config) {
