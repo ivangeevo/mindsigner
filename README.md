@@ -6,9 +6,19 @@
 
 Features:
 ***
+### v0.0.31
+Experimenting with ChatHandler to route websocket traffic to in-game chat.
+
+### v0.0.3
+Working Websocket Server connnection finally/ Removed CraftSocketServerHandler and other unused stuff.
+
+ ### Alpha means that its atleast functional right, I guess it's not ture Alpha then, but at least the Websocket runs. xD
+
+# Alpha
+***
 
 ### v0.0.23
-Working Websocket connnection finally / added Server Endpoint 
+Working socket connnection finally / added Server Endpoint 
 
 ### v0.0.22
 Changed the schema for the connection / added plan for connection path in README.md
