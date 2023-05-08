@@ -1,70 +1,76 @@
 package hive.ivangeevo.mindsigner;
 
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.server.level.ServerPlayer;
+import jakarta.websocket.ClientEndpointConfig;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.WebSocketContainer;
 import net.minecraft.world.level.block.Blocks;
-
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-
 import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
-
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.glassfish.tyrus.client.SslContextConfigurator;
+import org.glassfish.tyrus.client.SslEngineConfigurator;
+import org.glassfish.tyrus.server.Server;
 
-import java.util.stream.Collectors;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.FileInputStream;
+import java.net.URI;
+import java.security.KeyStore;
+import java.security.SecureRandom;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
+
 
 @Mod("mindsigner")
 @Mod.EventBusSubscriber(modid = "mindsigner", bus = Mod.EventBusSubscriber.Bus.FORGE)
-
 public class Mindsigner {
-
-    private static final Logger LOGGER = (Logger) LogManager.getLogger(Mindsigner.class);
-    static final UUID dummyUUID = UUID.randomUUID();
+    private static final Logger LOGGER = LogManager.getLogger(Mindsigner.class);
+    private static final UUID dummyUUID = UUID.randomUUID();
     private static CraftSocketServer socketServer;
 
-    // Define dummyUUID constant
 
     public Mindsigner() {
-        // Register the setup method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
-        // Register the enqueueIMC method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::enqueueIMC);
-        // Register the processIMC method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::processIMC);
 
-        // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
     }
 
+    private static SSLContext createSSLContext() throws Exception {
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        keyStore.load(new FileInputStream("keystore.p12"), "password".toCharArray());
+
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        keyManagerFactory.init(keyStore, "password".toCharArray());
+
+        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        trustManagerFactory.init(keyStore);
+
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), new SecureRandom());
+
+        return sslContext;
+    }
+
     private void setup(final FMLCommonSetupEvent event) {
-        int port = 8080;
-        try {
-            // Create a new CraftSocketServer object and start it in a separate thread
-            CraftSocketServer server = new CraftSocketServer(port, true);
-            server.start();
-
-            LOGGER.info("Websocket Started and listening on localhost:8080");
-        } catch (Exception e) {
-            LOGGER.error("Failed to start websocket server", e);
-        }
-
-        // Some preinit code
         LOGGER.info("HELLO FROM PREINIT");
         LOGGER.info("DIRT BLOCK >> {}", Blocks.DIRT.getRegistryName());
     }
 
-
     private void enqueueIMC(final InterModEnqueueEvent event) {
-        // Some example code to dispatch IMC to another mod
         InterModComms.sendTo("mindsigner", "helloworld", () -> {
             LOGGER.info("Hello world from the MDK");
             return "Hello world";
@@ -72,58 +78,61 @@ public class Mindsigner {
     }
 
     private void processIMC(final InterModProcessEvent event) {
-        // Some example code to receive and process InterModComms from other mods
-        LOGGER.info("Got IMC {}", event.getIMCStream().
-                map(m -> m.messageSupplier().get()).
-                collect(Collectors.toList()));
+        LOGGER.info("Got IMC {}", event.getIMCStream().map(m -> m.messageSupplier().get()).collect(Collectors.toList()));
     }
 
-    // You can use SubscribeEvent and let the Event Bus discover methods to call
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
+            try {
+                new Server();
+            } catch (Exception e) {
+                LOGGER.error("Failed to start CraftWebsocketServer", e);
+            }
+        }
+
+    private void startSocketServer() throws Exception {
 
     }
 
     @SubscribeEvent
-    public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getPlayer() instanceof ServerPlayer) {
-            if (socketServer != null && socketServer.isRunning()) {
-                TextComponent message = new TextComponent("WebSocket server started and listening on localhost:8080");
-                event.getPlayer().sendMessage(message, dummyUUID);
+    public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) throws Exception {
+        SSLContext sslContext = createSSLContext();
+        SslContextConfigurator sslContextConfigurator = new SslContextConfigurator();
+        sslContextConfigurator.setKeyStoreFile("keystore.p12");
+        sslContextConfigurator.setKeyStorePassword("password");
+        sslContextConfigurator.setTrustStoreFile("truststore.jks");
+        sslContextConfigurator.setTrustStorePassword("password");
+
+        SslEngineConfigurator sslEngineConfigurator = new SslEngineConfigurator(sslContextConfigurator, true, false, false);
+        WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+        CraftSocketEndpoint socketEndpoint = new CraftSocketEndpoint();
+        String uri = "wss://localhost:8080/websocket";
+        try { container.connectToServer
+                (socketEndpoint, ClientEndpointConfig.Builder.create().build(), new URI(uri));
+        } catch (Exception e) { LOGGER.error("Failed to connect to server", e);}
+            Server server = new Server("localhost", 8080, "/websocket", (Map<String, Object>) sslEngineConfigurator, CraftSocketEndpoint.class);
+        server.start();
+        socketServer = new CraftSocketServer();
+        LOGGER.info("CraftWebsocketServer started on port {}", server.getPort());
+        }
+
+
+
+        @SubscribeEvent
+        public void onPlayerLoggedOut (PlayerEvent.PlayerLoggedOutEvent event){
+
+            }
+
+        public void run() throws Exception {
+            while (!Thread.currentThread().isInterrupted()) {
+                // Handle incoming client connections and messages
+                // This could be done using the CraftSocketServer class or a separate class
+
+                // Add some statements here
+                // For example:
+                System.out.println("Waiting for clients...");
             }
         }
 
 
-        if (socketServer == null) {
-            try {
-                int port = 8080;
-                socketServer = new CraftSocketServer(port, true);
-                socketServer.start();
-
-                LOGGER.info("WebSocket server started and listening on localhost:8080");
-
-                // Send a chat message to the player
-                TextComponent message = new TextComponent("WebSocket server started and listening on localhost:8080");
-                event.getPlayer().sendMessage(message, dummyUUID);
-            } catch (Exception e) {
-                LOGGER.error("Failed to start websocket server", e);
-            }
-        }
     }
-
-    @SubscribeEvent
-    public void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
-        if (socketServer != null) {
-            try {
-                socketServer.stop();
-                LOGGER.info("WebSocket server stopped");
-            } catch (Exception e) {
-                LOGGER.error("Failed to stop websocket server", e);
-            }
-        }
-    }
-
-
-}
-
-

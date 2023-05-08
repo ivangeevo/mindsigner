@@ -1,53 +1,62 @@
 package hive.ivangeevo.mindsigner;
 
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.DeploymentException;
+import jakarta.websocket.WebSocketContainer;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import org.glassfish.tyrus.core.TyrusServerEndpointConfig;
+import org.glassfish.tyrus.server.Server;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
+//
+import jakarta.websocket.*;
+//
+import java.util.concurrent.Executor;
+
+
+
 
 public class CraftSocketServer {
-    private ServerSocket serverSocket;
+    private Server server;
+    private static final Logger LOGGER = LoggerFactory.getLogger(CraftSocketServer.class);
 
-    public CraftSocketServer(int port, boolean b) {
+    public void start() {
+        // Create your own SSLContext if required
+        TyrusServerEndpointConfig endpointConfig = TyrusServerEndpointConfig.Builder.create(CraftSocketEndpoint.class, "/")
+                .build();
     }
 
-    public void start() throws IOException {
-
-    }
-
-    public Socket accept() throws IOException {
-        return serverSocket.accept();
-    }
-
-    public void stop() throws IOException {
-        serverSocket.close();
-    }
-
-    public boolean isRunning() {
-        return true;
+    public void stop() {
+        server.stop();
+        LOGGER.info("CraftSocketServer stopped");
     }
 
     @SubscribeEvent
     public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        // Start the server on a separate thread
-        new Thread(() -> {
-            try {
-                ServerSocket serverSocket = new ServerSocket(8080, 0, InetAddress.getByName("localhost"));
-                System.out.println("CraftSocketServer started on port " + serverSocket.getLocalPort());
+        WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+        Server server = new Server("localhost", 8080, "/websocket", null, CraftSocketEndpoint.class);
+        try {
+            server.start();
+            LOGGER.info("CraftWebsocketServer started on port {}", server.getPort());
+        } catch (DeploymentException e) {
+            LOGGER.error("Failed to start CraftWebsocketServer", e);
+        }
+    }
 
-                while (true) {
-                    Socket clientSocket = serverSocket.accept();
-                    System.out.println("Client connected from " + clientSocket.getInetAddress().getHostAddress());
+    public static void main(String[] args) {
+        try {
+            new CraftSocketServer().start();
+        } catch (Exception e) {
+            LOGGER.error("Failed to start CraftWebsocketServer", e);
+        }
+    }
 
-                    // Handle the incoming clientSocket here
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }).start();
+    @SubscribeEvent
+    public void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        // Implement this method if needed
     }
 }
-
