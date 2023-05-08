@@ -1,4 +1,4 @@
-# <center>Mindsigner
+ # <center>Mindsigner
 
 
 
@@ -6,40 +6,39 @@
 
 Features:
 ***
-### v0.0.31 
-Experimenting with ChannelHandler to route websocket traffic to in-game chat.
+### v0.0.31
+Experimenting with ChatHandler to route websocket traffic to in-game chat.
 
 ### v0.0.3
-Working Websocket Server connnection finally/
-Removed CraftSocketServerHandler and other unused stuff.
+Working Websocket Server connnection finally/ Removed CraftSocketServerHandler and other unused stuff.
 
-Alpha means that its atleast functional right, I guess it's not ture Alpha then, but at least the Websocket runs. xD
+ ### Alpha means that its atleast functional right, I guess it's not ture Alpha then, but at least the Websocket runs. xD
 
 # Alpha
+***
 
-### v0023pa
-added Server Endpoint & Testing
+### v0.0.23
+Working socket connnection finally / added Server Endpoint 
 
-### v0022pa
+### v0.0.22
 Changed the schema for the connection / added plan for connection path in README.md
 
-### v0020pa
+### v.0.0.2 
 made a working websocket connection
 
-### v0016pa
+### v0.0.16
 testing with websockets & Authentication
 
-### v0015pa
+### v0.0.15
 
 Optimizing code, changed to Netty only instead of BouncyCastle.
 
- ### v0014pa
+ ### v0.0.14
  
 /added OpenSSL, Netty and testing BouncyCastle
 
-### v0001pa
-Start of project
-***
+### v0.0.1
+
 ## Pre-Alpha
 
 
