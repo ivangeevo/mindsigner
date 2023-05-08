@@ -26,6 +26,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 
+import java.net.*;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 
@@ -35,12 +36,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
+
+import static com.ibm.icu.text.PluralRules.Operand.e;
 
 
 @Mod("mindsigner")
@@ -86,11 +86,41 @@ public class Mindsigner {
             return true;
         }
     }
+    public static class CraftSocketServer {
+        private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        private final Gson gson = new Gson();
+        private final GsonEncoder gsonEncoder = new GsonEncoder(gson);
+        private final GsonDecoder gsonDecoder = new GsonDecoder(gson);
+        private ServerSocket serverSocket;
+        private Socket socket;
+        private ServerPlayer player;
+        private boolean running = false;
+        private boolean connected = false;
+        private String ip;
+        private int port;
+        private String username;
+        private String password;
+        private String uuid;
+        private String name;
+
+        public CraftSocketServer(String ip, int port) {
+            this.ip = ip;
+            this.port = port;
+        }
+        public void start() {
 
 
+        }
 
+        public boolean isRunning() {
+            return false;
+        }
+
+        public void stop() {
+        }
+    }
     private static SSLContext createSSLContext() throws Exception {
-        KeyStore keyStore = KeyStore.getInstance("JKS");
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
         keyStore.load(new FileInputStream("keystore.p12"), "password".toCharArray());
 
         KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
@@ -106,17 +136,7 @@ public class Mindsigner {
     }
 
 
-
-
     private void setup(final FMLCommonSetupEvent event) {
-        try {
-            int port = 8080;
-            socketServer = new CraftSocketServer();
-            socketServer.start();
-            LOGGER.info("WebSocket server started and listening on localhost:8080");
-        } catch (Exception e) {
-            LOGGER.error("Failed to start websocket server", e);
-        }
         LOGGER.info("HELLO FROM PREINIT");
         LOGGER.info("DIRT BLOCK >> {}", Blocks.DIRT.getRegistryName());
     }
@@ -138,42 +158,45 @@ public class Mindsigner {
     }
 
     @SubscribeEvent
-    public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+    public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) throws IOException {
         int port = 8080;
+        ServerSocket serverSocket;
+        serverSocket = new ServerSocket();
         try {
-            ServerSocket serverSocket = new ServerSocket(port, 0, InetAddress.getByName("localhost"));
-            LOGGER.info("CraftSocketServer started on port {}", serverSocket.getLocalPort());
-            ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-            executor.scheduleAtFixedRate(() -> {
-                try {
-                    Socket clientSocket = serverSocket.accept();
-                    LOGGER.info("Client connected from {}", clientSocket.getInetAddress().getHostAddress());
-                    // Handle the incoming clientSocket here
-                } catch (IOException e) {
-                    LOGGER.error("Error accepting client connection", e);
-                }
-            }, 0, 100, TimeUnit.MILLISECONDS);
-        } catch (IOException e) {
-            LOGGER.error("Failed to start CraftSocketServer", e);
+            serverSocket.bind(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), port));
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+        LOGGER.info("CraftSocketServer started on port {}", serverSocket.getLocalPort());
+        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+        executor.scheduleAtFixedRate(() -> {
+            try {
+                Socket clientSocket = serverSocket.accept();
+                LOGGER.info("Client connected from {}", clientSocket.getInetAddress().getHostAddress());
+                // Handle the incoming clientSocket here
+            } catch (IOException e) {
+                LOGGER.error("Error accepting client connection", e);
+            }
+        }, 0, 100, TimeUnit.MILLISECONDS);
         if (event.getPlayer() instanceof ServerPlayer) {
             if (socketServer != null && socketServer.isRunning()) {
                 TextComponent message = new TextComponent("WebSocket server started and listening on localhost:8080");
                 event.getPlayer().sendMessage(message, dummyUUID);
+            } else  {
+                LOGGER.error("Failed to start CraftSocketServer", e);
+                return;
             }
         }
-
-        if (socketServer == null)
-
-            try {
-
-            } catch (Exception e) {
-                LOGGER.error("Failed to start websocket server", e);
-            }
     }
 
 
-        @SubscribeEvent
-        public void onPlayerLoggedOut (PlayerEvent.PlayerLoggedOutEvent event){
+        public void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event){
+            if (event.getPlayer() instanceof ServerPlayer) {
+                if (socketServer != null && socketServer.isRunning()) {
+                    TextComponent message = new TextComponent("WebSocket server stopped");
+                    event.getPlayer().sendMessage(message, dummyUUID);
+                }
+        }
             if (socketServer != null) {
                 try {
                     socketServer.stop();
@@ -185,8 +208,7 @@ public class Mindsigner {
         }
 
 
-
-        public void run() throws Exception {
+        public void run () throws Exception {
             while (!Thread.currentThread().isInterrupted()) {
                 // Handle incoming client connections and messages
                 // This could be done using the CraftSocketServer class or a separate class
@@ -197,6 +219,4 @@ public class Mindsigner {
                 Thread.sleep(1000);
             }
         }
-
-
     }
