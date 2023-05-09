@@ -17,14 +17,17 @@ Working Websocket Server connnection finally/ Removed CraftSocketServerHandler a
 # Alpha
 ***
 
+### v0.0.25
+
+
 ### v0.0.23
-Working socket connnection finally / added Server Endpoint 
+Working socket connnection revised, better message handling / added Server Endpoint 
 
 ### v0.0.22
 Changed the schema for the connection / added plan for connection path in README.md
 
 ### v.0.0.2 
-made a working websocket connection
+first working socket connection
 
 ### v0.0.16
 testing with websockets & Authentication

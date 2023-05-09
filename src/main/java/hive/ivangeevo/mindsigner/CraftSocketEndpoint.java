@@ -1,11 +1,12 @@
 package hive.ivangeevo.mindsigner;
 
 import jakarta.websocket.*;
-
-import java.util.List;
-import java.util.Map;
-
 import jakarta.websocket.server.ServerEndpointConfig;
+import jakarta.websocket.Endpoint;
+import jakarta.websocket.EndpointConfig;
+import jakarta.websocket.Session;
+
+
 import org.glassfish.tyrus.client.auth.AuthConfig;
 import org.glassfish.tyrus.core.ComponentProviderService;
 import org.glassfish.tyrus.core.ReflectionHelper;
@@ -13,6 +14,7 @@ import org.glassfish.tyrus.core.TyrusServerEndpointConfig;
 import org.glassfish.tyrus.core.TyrusEndpointWrapper;
 import org.glassfish.tyrus.core.cluster.ClusterContext;
 import org.glassfish.tyrus.core.monitoring.EndpointEventListener;
+
 
 public class CraftSocketEndpoint extends Endpoint {
 
@@ -55,6 +57,7 @@ public class CraftSocketEndpoint extends Endpoint {
     private ReflectionHelper endpoint;
     // now you can deploy the endpoint
 }
+
 
 
 
