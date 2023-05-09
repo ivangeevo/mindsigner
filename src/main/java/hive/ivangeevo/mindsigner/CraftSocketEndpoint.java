@@ -1,6 +1,7 @@
 package hive.ivangeevo.mindsigner;
 
 import jakarta.websocket.*;
+import jakarta.websocket.server.ServerEndpoint;
 import jakarta.websocket.server.ServerEndpointConfig;
 import jakarta.websocket.Endpoint;
 import jakarta.websocket.EndpointConfig;
@@ -18,6 +19,26 @@ import org.glassfish.tyrus.core.monitoring.EndpointEventListener;
 
 public class CraftSocketEndpoint extends Endpoint {
 
+    @ServerEndpoint(value = "/myEndpoint", decoders = Mindsigner.MyDecoder.class, encoders = Mindsigner.MyEncoder.class)
+    public class MyEndpoint {
+        // Endpoint logic
+    }
+
+    @Override
+    public void onOpen(Session session, EndpointConfig config) {
+        // Check if the initial request is an HTTP request
+        if (session.getRequestURI().getScheme().equals("http")) {
+            // Send an HTTP response with a "101 Switching Protocols" status code and an "Upgrade" header
+            session.getAsyncRemote().sendText("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\r\n");
+        }
+
+        session.addMessageHandler(new MessageHandler.Whole<String>() {
+            @Override
+            public void onMessage(String message) {
+                // Handle message
+            }
+        });
+    }
     public ServerEndpointConfig.Configurator getConfigurator() {
         return null;
     }
@@ -41,16 +62,6 @@ public class CraftSocketEndpoint extends Endpoint {
         public CraftSocketEndpointConfig(Class<? extends Endpoint> endpointClass, EndpointConfig configuration, ComponentProviderService componentProvider, WebSocketContainer container, String contextPath, ServerEndpointConfig.Configurator configurator, SessionListener sessionListener, ClusterContext clusterContext, EndpointEventListener endpointEventListener, Boolean parallelBroadcastEnabled) throws DeploymentException {
             super(endpointClass, configuration, componentProvider, container, contextPath, configurator, sessionListener, clusterContext, endpointEventListener, parallelBroadcastEnabled);
         }
-    }
-
-    @Override
-    public void onOpen(Session session, EndpointConfig config) {
-        session.addMessageHandler(new MessageHandler.Whole<String>() {
-            @Override
-            public void onMessage(String message) {
-                // Handle message
-            }
-        });
     }
 
     TyrusServerEndpointConfig endpointConfig = (TyrusServerEndpointConfig) AuthConfig.Builder.create().build();

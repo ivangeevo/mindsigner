@@ -129,74 +129,40 @@ repositories {
 dependencies {
     implementation 'org.glassfish.tyrus:tyrus-project:2.1.3'
     implementation 'com.github.sergeybudnik:GeoDecoder:1.1.0'
-    implementation 'org.jboss.spec.javax.websocket:jboss-websocket-api_1.1_spec:2.0.0.Final'
-    implementation 'org.springframework.boot:spring-boot:3.0.4'
-    implementation 'org.springframework.boot:spring-boot:3.0.4'
-    implementation 'org.springframework.boot:spring-boot-configuration-metadata:3.0.4'
-
     implementation 'org.glassfish.tyrus:tyrus-container-grizzly-server:2.1.3'
-
-    // Specify the version of Minecraft to use. If this is any group other than 'net.minecraft' it is assumed
-    // that the dep is a ForgeGradle 'patcher' dependency, and its patches will be applied.
-    // The userdev artifact is a special name and will get all sorts of transformations applied to it.
 
     minecraft 'net.minecraftforge:forge:1.18.2-40.2.2'
 
-// Java WebSocket stuff
     implementation 'io.netty:netty-all:4.1.92.Final'
-
-
-// https://mvnrepository.com/artifact/org.glassfish.tyrus/tyrus-core
     implementation 'org.glassfish.tyrus:tyrus-core:2.1.3'
-
-// https://mvnrepository.com/artifact/org.glassfish.tyrus.bundles/tyrus-standalone-client-jdk
     implementation 'org.glassfish.tyrus.bundles:tyrus-standalone-client-jdk:2.1.3'
-
-// https://mvnrepository.com/artifact/org.glassfish.tyrus.bundles/tyrus-standalone-client
     implementation 'org.glassfish.tyrus.bundles:tyrus-standalone-client:2.1.3'
-
-    // https://mvnrepository.com/artifact/com.nb6868.onex/coder
-    testImplementation 'com.nb6868.onex:coder:3.7.44'
-
-    // https://mvnrepository.com/artifact/org.glassfish.tyrus/tyrus-client
     implementation 'org.glassfish.tyrus:tyrus-client:2.1.3'
-
-    // https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-websocket
     implementation 'org.apache.tomcat.embed:tomcat-embed-websocket:11.0.0-M4'
-
     implementation 'com.fasterxml.jackson.core:jackson-core:2.12.4'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.4'
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.4'
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'org.glassfish.tyrus:tyrus-container-grizzly-client:2.1.3'
+    implementation 'org.glassfish.tyrus:tyrus-server:2.1.3'
+    implementation 'jakarta.websocket:jakarta.websocket-all:2.1.0'
+    implementation 'javax.websocket:javax.websocket-api:1.1'
+    implementation 'jakarta.websocket:jakarta.websocket-api:2.0.1'
+
+    // Choose either Jakarta EE or Java EE dependencies
+    implementation 'jakarta.security.enterprise:jakarta.security.enterprise-api:3.0.0'
+    //implementation 'org.jboss.spec.javax.websocket:jboss-websocket-api_1.1_spec:2.0.0.Final'
+
+    // Choose either Jersey or Spring dependencies
+    implementation 'org.glassfish.jersey.core:jersey-server:3.1.1'
+    //implementation 'org.springframework.boot:spring-boot-configuration-metadata:3.0.4'
+
+    // Move test dependency to implementation if not needed for testing
+    //testImplementation 'com.nb6868.onex:coder:3.7.44'
 
     // https://mvnrepository.com/artifact/com.google.code.gson/gson
     implementation 'com.google.code.gson:gson:2.10.1'
 
-    implementation 'org.glassfish.tyrus:tyrus-container-grizzly-client:2.1.3'
-    implementation 'org.glassfish.tyrus:tyrus-server:2.1.3'
-
-    // https://mvnrepository.com/artifact/jakarta.security.enterprise/jakarta.security.enterprise-api
-    implementation 'jakarta.security.enterprise:jakarta.security.enterprise-api:3.0.0'
-
-    // https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-server
-    implementation 'org.glassfish.jersey.core:jersey-server:3.1.1'
-
-
-
-
-
-
-
-    // Real mod deobf dependency examples - these get remapped to your current mappings
-    // compileOnly fg.deobf("mezz.jei:jei-${mc_version}:${jei_version}:api") // Adds JEI API as a compile dependency
-    // runtimeOnly fg.deobf("mezz.jei:jei-${mc_version}:${jei_version}") // Adds the full JEI mod as a runtime dependency
-    // implementation fg.deobf("com.tterrag.registrate:Registrate:MC${mc_version}-${registrate_version}") // Adds registrate as a dependency
-
-    // Examples using mod jars from ./libs
-    // implementation fg.deobf("blank:coolmod-${mc_version}:${coolmod_version}")
-
-    // For more info...
-    // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
-    // http://www.gradle.org/docs/current/userguide/dependency_management.html
 }
 
 task runWebSocket(type: JavaExec) {

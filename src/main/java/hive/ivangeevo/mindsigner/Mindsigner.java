@@ -1,8 +1,8 @@
+
 package hive.ivangeevo.mindsigner;
 
 import com.google.gson.Gson;
-import jakarta.websocket.Decoder;
-import jakarta.websocket.Encoder;
+import jakarta.websocket.*;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Blocks;
@@ -19,18 +19,14 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
-import java.net.InetAddress;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static com.ibm.icu.text.PluralRules.Operand.e;
 
 
 @Mod("mindsigner")
@@ -48,39 +44,50 @@ public class Mindsigner {
         MinecraftForge.EVENT_BUS.register(this);
     }
 
-    public static class GsonEncoder implements Encoder.Text<Object> {
-        private final Gson gson = new Gson();
-
-        public GsonEncoder(Gson gson) {
+    public class MyEncoder<MyMessage> implements Encoder.Text<MyMessage> {
+        @Override
+        public void init(EndpointConfig config) {
+            // Initialization logic
         }
 
         @Override
-        public String encode(Object object) {
-            return gson.toJson(object);
+        public void destroy() {
+            // Cleanup logic
+        }
+
+        @Override
+        public String encode(MyMessage object) throws EncodeException {
+            return null;
         }
     }
 
-    public static class GsonDecoder implements Decoder.Text<Object> {
-        private final Gson gson = new Gson();
-
-        public GsonDecoder(Gson gson) {
+    public class MyDecoder<MyMessage> implements Decoder.Text<MyMessage> {
+        @Override
+        public void init(EndpointConfig config) {
+            // Initialization logic
         }
 
         @Override
-        public Object decode(String s) {
-            return gson.fromJson(s, Object.class);
+        public void destroy() {
+            // Cleanup logic
+        }
+
+
+        @Override
+        public MyMessage decode(String s) throws DecodeException {
+            return null;
         }
 
         @Override
         public boolean willDecode(String s) {
-            return true;
+            return false;
         }
     }
+
     public static class CraftSocketServer {
         private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         private final Gson gson = new Gson();
-        private final GsonEncoder gsonEncoder = new GsonEncoder(gson);
-        private final GsonDecoder gsonDecoder = new GsonDecoder(gson);
+
         private ServerSocket serverSocket;
         private Socket socket;
         private ServerPlayer player;
@@ -97,16 +104,54 @@ public class Mindsigner {
             this.ip = ip;
             this.port = port;
         }
+
         public void start() {
+            try {
+                serverSocket = new ServerSocket();
+                serverSocket.setReuseAddress(true);
+                serverSocket.bind(new InetSocketAddress(ip, port));
+                LOGGER.info("WebSocket server started and listening on {}:{}", ip, port);
 
+                while (true) {
+                    socket = serverSocket.accept();
+                    LOGGER.info("Client connected: {}", socket.getInetAddress().getHostAddress());
 
+                    // Create input and output streams for the socket
+                    DataInputStream in = new DataInputStream(socket.getInputStream());
+                    DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+
+                    // Read a UTF-8 encoded string from the client
+                    String message = in.readUTF();
+                    LOGGER.info("Received message from client: {}", message);
+
+                    // Write a UTF-8 encoded string to the client
+                    out.writeUTF("Hello from server!");
+
+                    // Close the input and output streams and the socket
+                    in.close();
+                    out.close();
+                    socket.close();
+                }
+            } catch (IOException e) {
+                LOGGER.error("Failed to start WebSocket server", e);
+            }
         }
 
         public boolean isRunning() {
-            return false;
+            return running;
         }
 
         public void stop() {
+            try {
+                if (connected) {
+                    socket.close();
+                }
+                serverSocket.close();
+                running = false;
+                connected = false;
+            } catch (IOException e) {
+                LOGGER.error("Failed to stop WebSocket server", e);
+            }
         }
     }
 
@@ -133,64 +178,50 @@ public class Mindsigner {
 
     @SubscribeEvent
     public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) throws IOException {
-        int port = 8080;
-        ServerSocket serverSocket;
-        serverSocket = new ServerSocket();
-        try {
-            serverSocket.bind(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), port));
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-        LOGGER.info("CraftSocketServer started on port {}", serverSocket.getLocalPort());
-        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-        executor.scheduleAtFixedRate(() -> {
-            try {
-                Socket clientSocket = serverSocket.accept();
-                LOGGER.info("Client connected from {}", clientSocket.getInetAddress().getHostAddress());
-                // Handle the incoming clientSocket here
-            } catch (IOException e) {
-                LOGGER.error("Error accepting client connection", e);
-            }
-        }, 0, 100, TimeUnit.MILLISECONDS);
         if (event.getPlayer() instanceof ServerPlayer) {
-            if (socketServer != null && socketServer.isRunning()) {
+            if (socketServer == null) {
+                // Create a new CraftSocketServer object with the desired IP address and port number
+                socketServer = new CraftSocketServer("0.0.0.0", 8443);
+            }
+            if (!socketServer.isRunning()) {
+                // Start the WebSocket server using the CraftSocketServer object
+                socketServer.start();
                 TextComponent message = new TextComponent("WebSocket server started and listening on localhost:8080");
                 event.getPlayer().sendMessage(message, dummyUUID);
-            } else  {
-                LOGGER.error("Failed to start CraftSocketServer", e);
-                return;
+            } else {
+                TextComponent message = new TextComponent("WebSocket server is already running");
+                event.getPlayer().sendMessage(message, dummyUUID);
             }
         }
     }
 
-
-        public void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event){
-            if (event.getPlayer() instanceof ServerPlayer) {
-                if (socketServer != null && socketServer.isRunning()) {
-                    TextComponent message = new TextComponent("WebSocket server stopped");
-                    event.getPlayer().sendMessage(message, dummyUUID);
-                }
-        }
-            if (socketServer != null) {
-                try {
-                    socketServer.stop();
-                    LOGGER.info("WebSocket server stopped");
-                } catch (Exception e) {
-                    LOGGER.error("Failed to stop websocket server", e);
-                }
+    @SubscribeEvent
+    public void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getPlayer() instanceof ServerPlayer) {
+            if (socketServer != null && socketServer.isRunning()) {
+                TextComponent message = new TextComponent("WebSocket server stopped");
+                event.getPlayer().sendMessage(message, dummyUUID);
             }
         }
-
-
-        public void run () throws Exception {
-            while (!Thread.currentThread().isInterrupted()) {
-                // Handle incoming client connections and messages
-                // This could be done using the CraftSocketServer class or a separate class
-
-                // Add some statements here
-                // For example:
-                System.out.println("Waiting for clients...");
-                Thread.sleep(1000);
+        if (socketServer != null) {
+            try {
+                socketServer.stop();
+                LOGGER.info("WebSocket server stopped");
+            } catch (Exception e) {
+                LOGGER.error("Failed to stop websocket server", e);
             }
         }
     }
+
+    public void run() throws Exception {
+        while (!Thread.currentThread().isInterrupted()) {
+            // Handle incoming client connections and messages
+            // This could be done using the CraftSocketServer class or a separate class
+
+            // Add some statements here
+            // For example:
+            System.out.println("Waiting for clients...");
+            Thread.sleep(1000);
+        }
+    }
+}

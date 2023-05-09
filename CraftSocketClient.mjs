@@ -1,42 +1,31 @@
-import ws from 'ws';
+import WebSocket from 'ws';
+import dhive from '@hiveio/dhive';
 
-class CraftSocketClient {
-  constructor(url) {
-    this.socket = new ws(url);
-  }
+const wssUrl = 'wss://0.0.0.0:8443/websockets/';
+const subprotocol = 'craft-protocol';
+const privateKey = 'mykey.pem';
+const certificate = 'mycert.cer';
 
-  connect() {
-    this.socket.addEventListener('open', () => {
-      console.log('WebSocket connected');
-      this.sendOnConnect('Hello, server!');
-    });
+const ws = new WebSocket(wssUrl, subprotocol, {
+  cert: certificate,
+  key: privateKey,
+  rejectUnauthorized: false
+});
 
-    this.socket.addEventListener('message', (event) => {
-      console.log(`Received message: ${event.data}`);
-    });
+ws.on('open', () => {
+  console.log('WebSocket connection established');
+  const client = new Client('https://api.hive.blog');
+  // Use the dhive client to interact with the Hive blockchain
+});
 
-    this.socket.addEventListener('error', (error) => {
-      console.error(error);
-    });
+ws.on('message', (data) => {
+  console.log('Received message:', data);
+});
 
-    this.socket.addEventListener('close', () => {
-      console.log('WebSocket closed');
-    });
-  }
+ws.on('close', () => {
+  console.log('WebSocket connection closed');
+});
 
-  send(message) {
-    this.socket.send(message);
-  }
-
-  on(event, callback) {
-    this.socket.addEventListener(event, callback);
-  }
-
-  sendOnConnect(message) {
-    this.socket.addEventListener('open', () => {
-      this.send(message);
-    });
-  }
-}
-
-export { CraftSocketClient };
+ws.on('error', (error) => {
+  console.error('WebSocket error:', error);
+});

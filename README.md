@@ -5,20 +5,24 @@
 ### Mindsigner is a minecraft mod that allows connection with the Hive Blockchain. 
 
 Features:
-***
+### v0.0.33 
+Endpoint's working, but still trying to troubleshoot why I cant connect with a client.
+
+### v0.0.32
+Websocket Server doesn't work, but atleast the game runs xD
+Trying to add Endpoints to Handle Connections
+Back to Websockets testing / SSL and TyrusServer configuration
+
 ### v0.0.31
 Experimenting with ChatHandler to route websocket traffic to in-game chat.
 
 ### v0.0.3
 Working Websocket Server connnection finally/ Removed CraftSocketServerHandler and other unused stuff.
-
- ### Alpha means that its atleast functional right, I guess it's not ture Alpha then, but at least the Websocket runs. xD
-
-# Alpha
 ***
+>Versions below this don't really represent actual progress, but testing.
 
 ### v0.0.25
-
+Stopped using Netty, started looking into Tyrus
 
 ### v0.0.23
 Working socket connnection revised, better message handling / added Server Endpoint 

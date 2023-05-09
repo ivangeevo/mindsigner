@@ -1,35 +1,28 @@
 package hive.ivangeevo.mindsigner;
 
-import java.io.InputStream;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.security.KeyStore;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
+import jakarta.websocket.DeploymentException;
+import jakarta.websocket.server.ServerEndpointConfig;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.tyrus.core.TyrusServerEndpointConfig;
+import org.glassfish.tyrus.core.TyrusWebSocket;
+import org.glassfish.tyrus.server.Server;
+import org.glassfish.tyrus.server.TyrusServerContainer;
+import org.glassfish.tyrus.spi.WebSocketEngine;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
-import javax.websocket.CloseReason;
-import javax.websocket.OnClose;
-import javax.websocket.OnError;
-import javax.websocket.OnMessage;
-import javax.websocket.OnOpen;
-import javax.websocket.RemoteEndpoint;
-import javax.websocket.Session;
+import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import javax.websocket.server.ServerEndpointConfig.Configurator;
-import javax.websocket.server.ServerEndpointConfig.Builder;
-
-import org.glassfish.tyrus.core.TyrusServerEndpointConfig;
-import org.glassfish.tyrus.server.Server;
-import jakarta.websocket.server.ServerEndpointConfig;
-import org.glassfish.tyrus.container.grizzly.server.GrizzlyServerContainer;
-import org.glassfish.jersey.server.ResourceConfig;
+import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.net.URI;
-
-
+import java.security.KeyStore;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 public class CraftSocketServer {
 
@@ -38,12 +31,11 @@ public class CraftSocketServer {
     private Server server;
     private static Set<Session> sessions = ConcurrentHashMap.newKeySet();
     private final String[] subprotocols;
+    private int port = 8443;
 
     public CraftSocketServer(String[] subprotocols) {
         this.subprotocols = subprotocols;
     }
-
-
 
     public void start() throws Exception {
         SSLContext sslContext = createSSLContext();
@@ -59,20 +51,18 @@ public class CraftSocketServer {
 
         Set<TyrusServerEndpointConfig> endpointConfigs = Collections.singleton(endpointConfig);
 
-        Socket socket = new Socket("localhost", 8443);
-        InetSocketAddress address = new InetSocketAddress(socket.getLocalAddress(), socket.getLocalPort());
-
-        Server server = new GrizzlyServerContainer(
-                new URI("wss://localhost:8443"),
-                new ResourceConfig().registerClasses(CraftSocketEndpoint.class),
-                true,
+        server = new Server(
+                "0.0.0.0",
+                port,
+                "/websockets",
                 properties,
-                sslContext
+                CraftSocketServer.class
         );
-        server.start();
-        LOGGER.info("CraftSocketServer started on port 8443");
-    }
 
+        server.start();
+
+        LOGGER.info("CraftSocketServer started on port " + port);
+    }
 
     public void stop() throws Exception {
         for (Session session : sessions) {
