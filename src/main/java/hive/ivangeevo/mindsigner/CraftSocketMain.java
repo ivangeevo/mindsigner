@@ -82,6 +82,7 @@ public class CraftSocketMain {
         public boolean willDecode(String s) {
             return false;
         }
+
     }
 
     public static class CraftSocketServer {
