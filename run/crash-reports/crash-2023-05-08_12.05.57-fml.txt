@@ -62,7 +62,7 @@ Details:
 		at java.lang.Class.getMethods(Class.java:2019) ~[?:?] {}
 		at net.minecraftforge.eventbus.EventBus.registerObject(EventBus.java:92) ~[eventbus-5.0.7.jar%2310!/:?] {}
 		at net.minecraftforge.eventbus.EventBus.register(EventBus.java:120) ~[eventbus-5.0.7.jar%2310!/:?] {}
-		at hive.ivangeevo.mindsigner.Mindsigner.<init>(Mindsigner.java:50) ~[%2384!/:?] {re:classloading}
+		at hive.ivangeevo.mindsigner.CraftSocketMain.<init>(Mindsigner.java:50) ~[%2384!/:?] {re:classloading}
 		at jdk.internal.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method) ~[?:?] {}
 		at jdk.internal.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:77) ~[?:?] {}
 		at jdk.internal.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45) ~[?:?] {}
@@ -97,7 +97,7 @@ Stacktrace:
 	at java.lang.Class.getMethods(Class.java:2019) ~[?:?] {}
 	at net.minecraftforge.eventbus.EventBus.registerObject(EventBus.java:92) ~[eventbus-5.0.7.jar%2310!/:?] {}
 	at net.minecraftforge.eventbus.EventBus.register(EventBus.java:120) ~[eventbus-5.0.7.jar%2310!/:?] {}
-	at hive.ivangeevo.mindsigner.Mindsigner.<init>(Mindsigner.java:50) ~[%2384!/:?] {re:classloading}
+	at hive.ivangeevo.mindsigner.CraftSocketMain.<init>(Mindsigner.java:50) ~[%2384!/:?] {re:classloading}
 	at jdk.internal.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method) ~[?:?] {}
 	at jdk.internal.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:77) ~[?:?] {}
 	at jdk.internal.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45) ~[?:?] {}

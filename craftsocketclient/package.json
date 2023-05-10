@@ -1,8 +1,13 @@
 {
   "dependencies": {
     "@hiveio/dhive": "^1.2.6",
+    "debug": "^4.3.4",
+    "dotenv": "^16.0.3",
+    "openssl": "^2.0.0",
+    "socket.io": "^4.6.1",
+    "socket.io-client": "^4.6.1",
+    "socketio": "^1.0.0",
     "ws": "^8.13.0",
-    "wscat": "^5.2.0"
-  },
-  "type": "module"
+    "yarn": "^1.22.19"
+  }
 }

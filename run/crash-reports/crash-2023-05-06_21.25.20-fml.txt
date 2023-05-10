@@ -36,7 +36,7 @@ A detailed walkthrough of the error, its code path and all known details is as f
 -- Head --
 Thread: Render thread
 Stacktrace:
-	at hive.ivangeevo.mindsigner.Mindsigner.<clinit>(Mindsigner.java:31) ~[%2384!/:?] {re:classloading}
+	at hive.ivangeevo.mindsigner.CraftSocketMain.<clinit>(Mindsigner.java:31) ~[%2384!/:?] {re:classloading}
 -- MOD mindsigner --
 Details:
 	Caused by 0: java.lang.ExceptionInInitializerError
@@ -62,7 +62,7 @@ Details:
 	Mod Issue URL: NOT PROVIDED
 	Exception message: java.lang.ClassCastException: class org.apache.logging.log4j.core.Logger cannot be cast to class org.slf4j.Logger (org.apache.logging.log4j.core.Logger is in module org.apache.logging.log4j.core@2.17.1 of loader 'MC-BOOTSTRAP' @7d3a22a9; org.slf4j.Logger is in module org.slf4j of loader 'MC-BOOTSTRAP' @7d3a22a9)
 Stacktrace:
-	at hive.ivangeevo.mindsigner.Mindsigner.<clinit>(Mindsigner.java:31) ~[%2384!/:?] {re:classloading}
+	at hive.ivangeevo.mindsigner.CraftSocketMain.<clinit>(Mindsigner.java:31) ~[%2384!/:?] {re:classloading}
 	at jdk.internal.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method) ~[?:?] {}
 	at jdk.internal.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:77) ~[?:?] {}
 	at jdk.internal.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45) ~[?:?] {}

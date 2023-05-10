@@ -1,13 +1,10 @@
 package hive.ivangeevo.mindsigner;
 
-import jakarta.websocket.DeploymentException;
+import hive.ivangeevo.mindsigner.xmindsigner.CSResourceConfig;
 import jakarta.websocket.server.ServerEndpointConfig;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.tyrus.core.TyrusServerEndpointConfig;
-import org.glassfish.tyrus.core.TyrusWebSocket;
 import org.glassfish.tyrus.server.Server;
-import org.glassfish.tyrus.server.TyrusServerContainer;
-import org.glassfish.tyrus.spi.WebSocketEngine;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -16,9 +13,6 @@ import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import javax.websocket.server.ServerEndpointConfig.Configurator;
 import java.io.InputStream;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.URI;
 import java.security.KeyStore;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,6 +33,7 @@ public class CraftSocketServer {
 
     public void start() throws Exception {
         SSLContext sslContext = createSSLContext();
+        ResourceConfig config = new CSResourceConfig();
 
         TyrusServerEndpointConfig endpointConfig = TyrusServerEndpointConfig.Builder.create(CraftSocketEndpoint.class, "/")
                 .subprotocols(List.of(subprotocols))
@@ -52,7 +47,7 @@ public class CraftSocketServer {
         Set<TyrusServerEndpointConfig> endpointConfigs = Collections.singleton(endpointConfig);
 
         server = new Server(
-                "0.0.0.0",
+                "localhost",
                 port,
                 "/websockets",
                 properties,
@@ -104,7 +99,7 @@ public class CraftSocketServer {
         trustManagerFactory.init(trustStore);
 
         // Create an SSL context with the key manager and trust manager
-        SSLContext sslContext = SSLContext.getInstance("TLS");
+        SSLContext sslContext = SSLContext.getInstance("SSL");
         sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
 
         return sslContext;

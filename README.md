@@ -5,6 +5,15 @@
 ### Mindsigner is a minecraft mod that allows connection with the Hive Blockchain. 
 
 Features:
+### v0.0.4-alpha
+
+### Working websocket Server and Client connection.
+
+# Alpha
+
+### v0.0.34
+Refactor of directories/ changing names of classes and packages to make more sense.
+
 ### v0.0.33 
 Endpoint's working, but still trying to troubleshoot why I cant connect with a client.
 

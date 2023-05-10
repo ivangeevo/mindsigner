@@ -16,13 +16,10 @@ import org.glassfish.tyrus.core.TyrusEndpointWrapper;
 import org.glassfish.tyrus.core.cluster.ClusterContext;
 import org.glassfish.tyrus.core.monitoring.EndpointEventListener;
 
+@ServerEndpoint(value = "/CraftSocketEndpoint", decoders = CraftSocketMain.MyDecoder.class, encoders = CraftSocketMain.MyEncoder.class)
 
 public class CraftSocketEndpoint extends Endpoint {
 
-    @ServerEndpoint(value = "/myEndpoint", decoders = Mindsigner.MyDecoder.class, encoders = Mindsigner.MyEncoder.class)
-    public class MyEndpoint {
-        // Endpoint logic
-    }
 
     @Override
     public void onOpen(Session session, EndpointConfig config) {
@@ -32,18 +29,28 @@ public class CraftSocketEndpoint extends Endpoint {
             session.getAsyncRemote().sendText("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\r\n");
         }
 
-        session.addMessageHandler(new MessageHandler.Whole<String>() {
+        session.addMessageHandler(new MessageHandler.Whole<CSEventMessage>() {
             @Override
-            public void onMessage(String message) {
-                // Handle message
+            public void onMessage(CSEventMessage message) {
+                if ("custom-event".equals(message.getEvent())) {
+                    onMessageEvent(message, session);
+                } else {
+                    // Handle other types of messages
+                }
+            }
+
+            private void onMessageEvent(CSEventMessage message, Session session) {
+                // Handle custom event
             }
         });
     }
+
+
     public ServerEndpointConfig.Configurator getConfigurator() {
         return null;
     }
 
-    public class CraftSocketEndpointConfig extends TyrusEndpointWrapper {
+    public static class CraftSocketEndpointConfig extends TyrusEndpointWrapper {
         /**
          * Create {@link TyrusEndpointWrapper} for class that extends {@link Endpoint}.
          *
@@ -67,6 +74,12 @@ public class CraftSocketEndpoint extends Endpoint {
     TyrusServerEndpointConfig endpointConfig = (TyrusServerEndpointConfig) AuthConfig.Builder.create().build();
     private ReflectionHelper endpoint;
     // now you can deploy the endpoint
+
+    @OnMessage
+    public void onEventMessage(CSEventMessage message, Session session) {
+        String eventName = message.getEvent();
+        // Handle the custom event
+    }
 }
 
 

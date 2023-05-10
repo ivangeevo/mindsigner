@@ -3,5 +3,5 @@ Specification-Title: mindsigner
 Specification-Version: 1
 Implementation-Title: mindsigner
 Implementation-Version: 0.0.1-alpha
-Implementation-Timestamp: 2023-05-09T21:30:21+0300
+Implementation-Timestamp: 2023-05-10T08:13:33+0300
 

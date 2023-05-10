@@ -40,7 +40,7 @@ Stacktrace:
 -- MOD mindsigner --
 Details:
 	Caused by 0: java.lang.NoClassDefFoundError: jakarta/websocket/DeploymentException
-		at hive.ivangeevo.mindsigner.Mindsigner.setup(Mindsigner.java:111) ~[%2384!/:?] {re:classloading}
+		at hive.ivangeevo.mindsigner.CraftSocketMain.setup(Mindsigner.java:111) ~[%2384!/:?] {re:classloading}
 		at net.minecraftforge.eventbus.EventBus.doCastFilter(EventBus.java:247) ~[eventbus-5.0.7.jar%2310!/:?] {}
 		at net.minecraftforge.eventbus.EventBus.lambda$addListener$11(EventBus.java:239) ~[eventbus-5.0.7.jar%2310!/:?] {}
 		at net.minecraftforge.eventbus.EventBus.post(EventBus.java:302) ~[eventbus-5.0.7.jar%2310!/:?] {}
@@ -68,7 +68,7 @@ Stacktrace:
 	at java.lang.ClassLoader.loadClass(ClassLoader.java:520) ~[?:?] {}
 	at cpw.mods.cl.ModuleClassLoader.loadClass(ModuleClassLoader.java:134) ~[securejarhandler-1.0.3.jar:?] {}
 	at java.lang.ClassLoader.loadClass(ClassLoader.java:520) ~[?:?] {}
-	at hive.ivangeevo.mindsigner.Mindsigner.setup(Mindsigner.java:111) ~[%2384!/:?] {re:classloading}
+	at hive.ivangeevo.mindsigner.CraftSocketMain.setup(Mindsigner.java:111) ~[%2384!/:?] {re:classloading}
 	at net.minecraftforge.eventbus.EventBus.doCastFilter(EventBus.java:247) ~[eventbus-5.0.7.jar%2310!/:?] {}
 	at net.minecraftforge.eventbus.EventBus.lambda$addListener$11(EventBus.java:239) ~[eventbus-5.0.7.jar%2310!/:?] {}
 	at net.minecraftforge.eventbus.EventBus.post(EventBus.java:302) ~[eventbus-5.0.7.jar%2310!/:?] {}
