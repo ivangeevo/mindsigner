@@ -1,144 +1,80 @@
 package hive.ivangeevo.mindsigner;
 
-import hive.ivangeevo.mindsigner.xmindsigner.CSResourceConfig;
-import jakarta.websocket.server.ServerEndpointConfig;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.tyrus.core.TyrusServerEndpointConfig;
-import org.glassfish.tyrus.server.Server;
+import hive.ivangeevo.mindsigner.xmindsigner.CSServerConfigurator;
+import jakarta.websocket.*;
+import jakarta.websocket.server.ServerEndpoint;
+import org.glassfish.tyrus.core.TyrusEndpointWrapper;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
-import javax.websocket.*;
-import javax.websocket.server.ServerEndpoint;
-import javax.websocket.server.ServerEndpointConfig.Configurator;
 import java.io.InputStream;
 import java.security.KeyStore;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
+@ServerEndpoint(value = "/", configurator = CSServerConfigurator.class, subprotocols = {"protocol1", "protocol2"})
 public class CraftSocketServer {
-
     private static final Logger LOGGER = Logger.getLogger(CraftSocketServer.class.getName());
+    private static final Set<Session> sessions = ConcurrentHashMap.newKeySet();
+    private static TyrusEndpointWrapper serverEndpoint;
 
-    private Server server;
-    private static Set<Session> sessions = ConcurrentHashMap.newKeySet();
-    private final String[] subprotocols;
-    private int port = 8443;
-
-    public CraftSocketServer(String[] subprotocols) {
-        this.subprotocols = subprotocols;
-    }
+    public CraftSocketServer() {}
 
     public void start() throws Exception {
         SSLContext sslContext = createSSLContext();
-        ResourceConfig config = new CSResourceConfig();
-
-        TyrusServerEndpointConfig endpointConfig = TyrusServerEndpointConfig.Builder.create(CraftSocketEndpoint.class, "/")
-                .subprotocols(List.of(subprotocols))
-                .maxSessions(100)
-                .configurator(new ServerEndpointConfig.Configurator())
-                .build();
-
-        Map<String, Object> properties = new HashMap<>();
-        properties.put("org.glassfish.tyrus.incomingBufferSize", 1024 * 1024);
-
-        Set<TyrusServerEndpointConfig> endpointConfigs = Collections.singleton(endpointConfig);
-
-        server = new Server(
-                "localhost",
-                port,
-                "/websockets",
-                properties,
-                CraftSocketServer.class
-        );
-
-        server.start();
-
-        LOGGER.info("CraftSocketServer started on port " + port);
+        serverEndpoint = new TyrusEndpointWrapper(null, null, sslContext, null, null, null, null);
+        serverEndpoint.setEndpoint(CraftSocketServer.class);
+        serverEndpoint.start();
+        LOGGER.info("CraftSocketServer started");
     }
 
     public void stop() throws Exception {
         for (Session session : sessions) {
             session.close(new CloseReason(CloseReason.CloseCodes.GOING_AWAY, "Server shutting down"));
         }
-        server.stop();
+        serverEndpoint.stop();
+        LOGGER.info("CraftSocketServer stopped");
     }
 
-    public void broadcast(String message) {
-        for (Session session : sessions) {
-            if (session.isOpen()) {
-                RemoteEndpoint.Basic remote = session.getBasicRemote();
-                try {
-                    remote.sendText(message);
-                } catch (Exception e) {
-                    LOGGER.warning("Failed to send message to session " + session.getId() + ": " + e.getMessage());
-                }
-            }
-        }
+    @OnOpen
+    public void onOpen(Session session, EndpointConfig endpointConfig) {
+        sessions.add(session);
+        LOGGER.info("New session opened: " + session.getId());
+    }
+
+    @OnClose
+    public void onClose(Session session, CloseReason closeReason) {
+        sessions.remove(session);
+        LOGGER.info("Session closed: " + session.getId() + ", Reason: " + closeReason);
+    }
+
+    @OnError
+    public void onError(Session session, Throwable throwable) {
+        LOGGER.severe("Error occurred in session: " + session.getId() + ", Error: " + throwable.getMessage());
+    }
+
+    @OnMessage
+    public void onMessage(String message, Session session) {
+        LOGGER.info("Received message from " + session.getId() + ": " + message);
     }
 
     private SSLContext createSSLContext() throws Exception {
-        // Create a key store with the server certificate
-        KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        InputStream keyStoreStream = getClass().getResourceAsStream("/keystore.p12");
-        keyStore.load(keyStoreStream, "password".toCharArray());
+        char[] passphrase = "changeit".toCharArray();
+        KeyStore ks = KeyStore.getInstance("PKCS12");
+        InputStream is = getClass().getClassLoader().getResourceAsStream("keystore.p12");
+        ks.load(is, passphrase);
 
-        // Create a trust store with the client certificate
-        KeyStore trustStore = KeyStore.getInstance("JKS");
-        InputStream trustStoreStream = getClass().getResourceAsStream("/truststore.jks");
-        trustStore.load(trustStoreStream, "password".toCharArray());
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+        kmf.init(ks, passphrase);
 
-        // Create a key manager factory with the key store
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        keyManagerFactory.init(keyStore, "password".toCharArray());
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+        tmf.init(ks);
 
-        // Create a trust manager factory with the trust store
-        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-        trustManagerFactory.init(trustStore);
-
-        // Create an SSL context with the key manager and trust manager
-        SSLContext sslContext = SSLContext.getInstance("SSL");
-        sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
 
         return sslContext;
-    }
-
-    @ServerEndpoint(value = "/", configurator = CraftSocketServerConfigurator.class)
-    public static class CraftSocketEndpoint {
-
-        private Session session;
-
-        @OnOpen
-        public void onOpen(Session session) {
-            this.session = session;
-            sessions.add(session);
-            LOGGER.info("Session " + session.getId() + " opened");
-        }
-
-        @OnMessage
-        public void onMessage(String message) {
-            LOGGER.info("Received message from session " + session.getId() + ": " + message);
-        }
-
-        @OnClose
-        public void onClose(CloseReason reason) {
-            sessions.remove(session);
-            LOGGER.info("Session " + session.getId() + " closed: " + reason.getReasonPhrase());
-        }
-
-        @OnError
-        public void onError(Throwable throwable) {
-            LOGGER.warning("Session " + session.getId() + " error: " + throwable.getMessage());
-        }
-    }
-
-    public static class CraftSocketServerConfigurator extends Configurator {
-
-        @Override
-        public <T> T getEndpointInstance(Class<T> endpointClass) throws InstantiationException {
-            return endpointClass.cast(new CraftSocketEndpoint());
-        }
     }
 }

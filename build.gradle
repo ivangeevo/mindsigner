@@ -163,6 +163,15 @@ dependencies {
     // https://mvnrepository.com/artifact/com.google.code.gson/gson
     implementation 'com.google.code.gson:gson:2.10.1'
 
+    implementation 'javax.ws.rs:javax.ws.rs-api:2.1'
+
+    // https://mvnrepository.com/artifact/jakarta.enterprise/jakarta.enterprise.cdi-api
+    compileOnly 'jakarta.enterprise:jakarta.enterprise.cdi-api:4.0.1'
+
+// https://mvnrepository.com/artifact/jakarta.servlet/jakarta.servlet-api
+    compileOnly 'jakarta.servlet:jakarta.servlet-api:6.0.0'
+
+
 }
 
 task runWebSocket(type: JavaExec) {

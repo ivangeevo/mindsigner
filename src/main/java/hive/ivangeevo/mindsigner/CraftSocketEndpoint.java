@@ -50,6 +50,9 @@ public class CraftSocketEndpoint extends Endpoint {
         return null;
     }
 
+    public void setCraftSocketServer(CraftSocketServer craftSocketServer) {
+    }
+
     public static class CraftSocketEndpointConfig extends TyrusEndpointWrapper {
         /**
          * Create {@link TyrusEndpointWrapper} for class that extends {@link Endpoint}.
