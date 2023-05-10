@@ -1,5 +1,13 @@
+package hive.ivangeevo.mindsigner.xmindsigner;
+
 import hive.ivangeevo.mindsigner.CraftSocketEndpoint;
 import hive.ivangeevo.mindsigner.CraftSocketServer;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpSession;
+import jakarta.websocket.EndpointConfig;
+import jakarta.websocket.HandshakeResponse;
+import jakarta.websocket.server.HandshakeRequest;
+import jakarta.websocket.server.ServerEndpointConfig;
 
 public class CSServerConfigurator extends ServerEndpointConfig.Configurator {
     private static final String CRAFT_SOCKET_SERVER_KEY = "CraftSocketServer";
