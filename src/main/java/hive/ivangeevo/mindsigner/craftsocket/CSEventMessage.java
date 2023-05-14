@@ -1,4 +1,4 @@
-package hive.ivangeevo.mindsigner;
+package hive.ivangeevo.mindsigner.craftsocket;
 public class CSEventMessage {
     private String eventName;
     private String eventData;

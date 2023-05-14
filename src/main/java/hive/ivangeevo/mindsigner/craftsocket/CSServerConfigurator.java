@@ -1,7 +1,5 @@
-package hive.ivangeevo.mindsigner.xmindsigner;
+package hive.ivangeevo.mindsigner.craftsocket;
 
-import hive.ivangeevo.mindsigner.CraftSocketEndpoint;
-import hive.ivangeevo.mindsigner.CraftSocketServer;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpSession;
 import jakarta.websocket.EndpointConfig;
@@ -18,7 +16,7 @@ public class CSServerConfigurator extends ServerEndpointConfig.Configurator {
         // Store the CraftSocketServer instance in the endpoint configuration
         HttpSession session = (HttpSession) request.getHttpSession();
         ServletContext servletContext = session.getServletContext();
-        CraftSocketServer craftSocketServer = (CraftSocketServer) servletContext.getAttribute(CRAFT_SOCKET_SERVER_KEY);
+        CSWebsocketServer craftSocketServer = (CSWebsocketServer) servletContext.getAttribute(CRAFT_SOCKET_SERVER_KEY);
         sec.getUserProperties().put(CRAFT_SOCKET_SERVER_KEY, craftSocketServer);
         this.endpointConfig = sec;
     }
@@ -30,12 +28,12 @@ public class CSServerConfigurator extends ServerEndpointConfig.Configurator {
     @Override
     public <T> T getEndpointInstance(Class<T> endpointClass) throws InstantiationException {
         // Check if the endpoint class is the CraftSocketEndpoint
-        if (endpointClass.equals(CraftSocketEndpoint.class)) {
+        if (endpointClass.equals(CSEndpoint.class)) {
             // Get the CraftSocketServer instance from the endpoint configuration
-            CraftSocketServer craftSocketServer = (CraftSocketServer) getEndpointConfig().getUserProperties().get(CRAFT_SOCKET_SERVER_KEY);
+            CSWebsocketServer craftSocketServer = (CSWebsocketServer) getEndpointConfig().getUserProperties().get(CRAFT_SOCKET_SERVER_KEY);
 
             // Create a new CraftSocketEndpoint instance with the CraftSocketServer instance injected
-            CraftSocketEndpoint craftSocketEndpoint = new CraftSocketEndpoint();
+            CSEndpoint craftSocketEndpoint = new CSEndpoint();
             craftSocketEndpoint.setCraftSocketServer(craftSocketServer);
             return (T) craftSocketEndpoint;
         } else {

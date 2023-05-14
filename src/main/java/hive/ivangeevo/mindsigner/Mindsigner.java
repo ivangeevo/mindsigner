@@ -2,6 +2,7 @@
 package hive.ivangeevo.mindsigner;
 
 import com.google.gson.Gson;
+import hive.ivangeevo.mindsigner.craftsocket.CSWebsocketServer;
 import jakarta.websocket.*;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
@@ -31,12 +32,12 @@ import java.util.stream.Collectors;
 
 @Mod("mindsigner")
 @Mod.EventBusSubscriber(modid = "mindsigner", bus = Mod.EventBusSubscriber.Bus.FORGE)
-public class CraftSocketMain {
-    private static final Logger LOGGER = LogManager.getLogger(CraftSocketMain.class);
+public class Mindsigner {
+    private static final Logger LOGGER = LogManager.getLogger(Mindsigner.class);
     private static final UUID dummyUUID = UUID.randomUUID();
-    private static CraftSocketServer socketServer;
+    private static CSWebsocketServer socketServer;
 
-    public CraftSocketMain() {
+    public Mindsigner() {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::enqueueIMC);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::processIMC);
@@ -85,7 +86,7 @@ public class CraftSocketMain {
 
     }
 
-    public static class CraftSocketServer {
+    public static class CSWebsocketServer {
         private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         private final Gson gson = new Gson();
 
@@ -101,23 +102,21 @@ public class CraftSocketMain {
         private String uuid;
         private String name;
 
-        public CraftSocketServer(String ip, int port) {
+        public CSWebsocketServer(String ip, int port) {
             this.ip = ip;
             this.port = port;
         }
 
         public void start() {
             try {
-                serverSocket = new ServerSocket();
-                serverSocket.setReuseAddress(true);
-                serverSocket.bind(new InetSocketAddress(ip, port));
-                LOGGER.info("WebSocket server started and listening on {}:{}", ip, port);
+                socketServer = new CSWebsocketServer("localhost", 8443);
+                LOGGER.info("WebSocket server started and listening on {}:{}", socketServer.getHost(), socketServer.getPort());
 
                 while (true) {
-                    socket = serverSocket.accept();
-                    LOGGER.info("Client connected: {}", socket.getInetAddress().getHostAddress());
+                    CSWebsocketServer socket = socketServer.accept(); // accept incoming WebSocket connections
+                    LOGGER.info("Client connected: {}", socket.getRemoteSocketAddress());
 
-                    // Create input and output streams for the socket
+                    // Create input and output streams for the WebSocket
                     DataInputStream in = new DataInputStream(socket.getInputStream());
                     DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
@@ -128,7 +127,7 @@ public class CraftSocketMain {
                     // Write a UTF-8 encoded string to the client
                     out.writeUTF("Hello from server!");
 
-                    // Close the input and output streams and the socket
+                    // Close the input and output streams and the WebSocket
                     in.close();
                     out.close();
                     socket.close();
@@ -137,6 +136,34 @@ public class CraftSocketMain {
                 LOGGER.error("Failed to start WebSocket server", e);
             }
         }
+
+        private void close() {
+        }
+
+        private Object getPort() {
+            return null;
+        }
+
+        private Object getHost() {
+            return null;
+        }
+
+        private OutputStream getOutputStream() {
+            return null;
+        }
+
+        private InputStream getInputStream() {
+            return null;
+        }
+
+        private Throwable getRemoteSocketAddress() {
+            return null;
+        }
+
+        private CSWebsocketServer accept() {
+            return null;
+        }
+
 
         public boolean isRunning() {
             return running;
@@ -181,11 +208,11 @@ public class CraftSocketMain {
     public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) throws IOException {
         if (event.getPlayer() instanceof ServerPlayer) {
             if (socketServer == null) {
-                // Create a new CraftSocketServer object with the desired IP address and port number
-                socketServer = new CraftSocketServer("localhost", 8443);
+                // Create a new CSWebsocketServer object with the desired IP address and port number
+                socketServer = new CSWebsocketServer("localhost", 8443);
             }
             if (!socketServer.isRunning()) {
-                // Start the WebSocket server using the CraftSocketServer object
+                // Start the WebSocket server using the CSWebsocketServer object
                 socketServer.start();
                 TextComponent message = new TextComponent("WebSocket server started and listening on localhost:8080");
                 event.getPlayer().sendMessage(message, dummyUUID);

@@ -13,8 +13,8 @@ java.lang.NoClassDefFoundError: jakarta/websocket/Encoder$Text
 	at cpw.mods.cl.ModuleClassLoader.findClass(ModuleClassLoader.java:216) ~[securejarhandler-1.0.3.jar:?] {}
 	at cpw.mods.cl.ModuleClassLoader.loadClass(ModuleClassLoader.java:132) ~[securejarhandler-1.0.3.jar:?] {}
 	at java.lang.ClassLoader.loadClass(ClassLoader.java:520) ~[?:?] {}
-	at hive.ivangeevo.mindsigner.CraftSocketMain$CraftSocketServer.<init>(Mindsigner.java:82) ~[%2384!/:?] {re:classloading}
-	at hive.ivangeevo.mindsigner.CraftSocketMain.onPlayerLoggedIn(Mindsigner.java:139) ~[%2384!/:?] {re:classloading}
+	at hive.ivangeevo.mindsigner.Mindsigner$CraftSocketServer.<init>(Mindsigner.java:82) ~[%2384!/:?] {re:classloading}
+	at hive.ivangeevo.mindsigner.Mindsigner.onPlayerLoggedIn(Mindsigner.java:139) ~[%2384!/:?] {re:classloading}
 	at net.minecraftforge.eventbus.ASMEventHandler_0_Mindsigner_onPlayerLoggedIn_PlayerLoggedInEvent.invoke(.dynamic) ~[?:?] {}
 	at net.minecraftforge.eventbus.ASMEventHandler.invoke(ASMEventHandler.java:85) ~[eventbus-5.0.7.jar%2310!/:?] {}
 	at net.minecraftforge.eventbus.EventBus.post(EventBus.java:302) ~[eventbus-5.0.7.jar%2310!/:?] {}

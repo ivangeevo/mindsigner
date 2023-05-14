@@ -1,4 +1,4 @@
-package hive.ivangeevo.mindsigner.xmindsigner;
+package hive.ivangeevo.mindsigner.craftsocket;
 
 import org.glassfish.jersey.server.ResourceConfig;
 

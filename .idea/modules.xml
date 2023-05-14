@@ -2,6 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/hive.ivangeevo.mindsigner.main.iml" filepath="$PROJECT_DIR$/.idea/modules/hive.ivangeevo.mindsigner.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/hive.ivangeevo.mindsigner.test.iml" filepath="$PROJECT_DIR$/.idea/modules/hive.ivangeevo.mindsigner.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mindsigner.main.iml" filepath="$PROJECT_DIR$/.idea/modules/mindsigner.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mindsigner.test.iml" filepath="$PROJECT_DIR$/.idea/modules/mindsigner.test.iml" />
     </modules>
