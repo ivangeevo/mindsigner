@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class Mindsigner {
     private static final Logger LOGGER = LogManager.getLogger(Mindsigner.class);
     private static CSWebsocketServer socketServer;
-    
+
 
     public Mindsigner() {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
