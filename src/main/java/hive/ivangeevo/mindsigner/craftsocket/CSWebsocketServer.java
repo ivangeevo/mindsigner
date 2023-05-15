@@ -10,9 +10,14 @@ import jakarta.websocket.server.ServerEndpoint;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -24,20 +29,24 @@ import java.util.logging.Logger;
 
 @ServerEndpoint(value = "/", configurator = CSServerConfigurator.class, subprotocols = {"protocol1", "protocol2"})
 public class CSWebsocketServer {
+
     private static final Logger LOGGER = Logger.getLogger(CSWebsocketServer.class.getName());
     private static final Set<Session> sessions = ConcurrentHashMap.newKeySet();
-    private static CSComponentProvider.FeatureImpl.TyrusEndpointPublisher serverEndpointPublisher;
-    private final InetSocketAddress address;
 
+    private Session session;
 
+   private String host = new String("localhost");
+   private int port = 8443;
 
-    public CSWebsocketServer(InetSocketAddress address) {
-        this.address = address;
+    public CSWebsocketServer() {}
+
+    public CSWebsocketServer(Session session) {
+        this.session = session;
     }
 
-
-
-
+    public void setSession(Session session) {
+        this.session = session;
+    }
 
     private HttpsServer createHttpsServer(InetSocketAddress address, SSLContext sslContext) throws IOException {
         HttpsServer httpsServer = HttpsServer.create(address, 0);
@@ -47,16 +56,13 @@ public class CSWebsocketServer {
         return httpsServer;
     }
 
-    private String handleHttpRequest(HttpExchange exchange)  {
-
-
-        String key;
+    private void handleHttpRequest(HttpExchange exchange) {
         if (exchange.getRequestMethod().equalsIgnoreCase("GET")) {
             try {
                 Headers headers = exchange.getRequestHeaders();
                 if (headers.containsKey("Upgrade") && headers.get("Upgrade").get(0).equalsIgnoreCase("websocket")) {
-                    key = headers.getFirst("Sec-WebSocket-Key");
-                    String response = WebSocketUtil.generateHandshakeResponse(key);
+                    String key = headers.getFirst("Sec-WebSocket-Key");
+                    String response = generateHandshakeResponse(key);
                     exchange.sendResponseHeaders(101, response.length());
                     OutputStream os = exchange.getResponseBody();
                     os.write(response.getBytes());
@@ -70,16 +76,18 @@ public class CSWebsocketServer {
                 LOGGER.severe("Error occurred while handling HTTP request: " + e.getMessage());
             }
         }
-        public static String generateHandshakeResponse (String key) throws Exception {
-            String guid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-            String concat = key + guid;
-            byte[] sha1 = MessageDigest.getInstance("SHA-1").digest(concat.getBytes("UTF-8"));
-            return "HTTP/1.1 101 Switching Protocols\r\n" +
-                    "Upgrade: websocket\r\n" +
-                    "Connection: Upgrade\r\n" +
-                    "Sec-WebSocket-Accept: " + Base64.getEncoder().encodeToString(sha1) + "\r\n\r\n";
-        }
     }
+
+    private String generateHandshakeResponse(String key) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        String guid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+        String concat = key + guid;
+        byte[] sha1 = MessageDigest.getInstance("SHA-1").digest(concat.getBytes("UTF-8"));
+        return "HTTP/1.1 101 Switching Protocols\r\n" +
+                "Upgrade: websocket\r\n" +
+                "Connection: Upgrade\r\n" +
+                "Sec-WebSocket-Accept: " + Base64.getEncoder().encodeToString(sha1) + "\r\n\r\n";
+    }
+
     private ThreadPoolExecutor getThreadPoolExecutor() {
         int corePoolSize = 10;
         int maxPoolSize = 100;
@@ -93,6 +101,7 @@ public class CSWebsocketServer {
         for (Session session : sessions) {
             session.close(new CloseReason(CloseReason.CloseCodes.GOING_AWAY, "Server shutting down"));
         }
+        CSComponentProvider.FeatureImpl.TyrusEndpointPublisher serverEndpointPublisher = new CSComponentProvider.FeatureImpl.TyrusEndpointPublisher();
         serverEndpointPublisher.stop();
         LOGGER.info("CraftSocketServer stopped");
     }
@@ -119,26 +128,19 @@ public class CSWebsocketServer {
         LOGGER.info("Received message from " + session.getId() + ": " + message);
     }
 
-    public void start() throws IOException {
 
+    public Session accept() throws IOException, DeploymentException, URISyntaxException {
+        WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+        return container.connectToServer(this, new URI("ws://" + host + ":" + port + "/CraftSocketEndpoint"));
+    }
+
+    private CSWebsocketServer(String host, int port, Session session) {
+        this.host = host;
+        this.port = port;
+        this.session = session;
     }
 
 
-    public CSWebsocketServer accept() throws IOException {
-        return null;
-    }
-
-    public InputStream getInputStream() throws IOException {
-        return null;
-    }
-
-    public OutputStream getOutputStream() throws IOException {
-        return null;
-    }
-
-    public SocketAddress getRemoteSocketAddress() {
-        return null;
-    }
 
     public void close() throws IOException {
     }
@@ -163,6 +165,15 @@ public class CSWebsocketServer {
 
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+
+        int port = 8080;
+        String hostname = "localhost";
+        InetSocketAddress address = new InetSocketAddress(hostname, port);
+
+        HttpsServer httpsServer = createHttpsServer(address, sslContext);
+
+
+        httpsServer.start();
 
         return sslContext;
     }

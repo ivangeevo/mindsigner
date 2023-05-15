@@ -1,11 +1,9 @@
 
 package hive.ivangeevo.mindsigner;
 
-import com.google.gson.Gson;
-import hive.ivangeevo.mindsigner.craftsocket.CSWebsocketServer;
 import jakarta.websocket.*;
+import net.minecraft.Util;
 import net.minecraft.network.chat.TextComponent;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -21,12 +19,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
-import java.net.InetSocketAddress;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.UUID;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Collectors;
 
 
@@ -37,6 +33,11 @@ public class Mindsigner {
     private static final UUID dummyUUID = UUID.randomUUID();
     private static CSWebsocketServer socketServer;
 
+
+
+
+
+
     public Mindsigner() {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::enqueueIMC);
@@ -45,100 +46,21 @@ public class Mindsigner {
         MinecraftForge.EVENT_BUS.register(this);
     }
 
-    public class MyEncoder<MyMessage> implements Encoder.Text<MyMessage> {
-        @Override
-        public void init(EndpointConfig config) {
-            // Initialization logic
-        }
-
-        @Override
-        public void destroy() {
-            // Cleanup logic
-        }
-
-        @Override
-        public String encode(MyMessage object) throws EncodeException {
-            return null;
-        }
-    }
-
-    public class MyDecoder<MyMessage> implements Decoder.Text<MyMessage> {
-        @Override
-        public void init(EndpointConfig config) {
-            // Initialization logic
-        }
-
-        @Override
-        public void destroy() {
-            // Cleanup logic
-        }
+    public static class CSWebsocketServer extends Thread {
 
 
-        @Override
-        public MyMessage decode(String s) throws DecodeException {
-            return null;
-        }
 
-        @Override
-        public boolean willDecode(String s) {
-            return false;
-        }
-
-    }
-
-    public static class CSWebsocketServer {
-        private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        private final Gson gson = new Gson();
-
-        private ServerSocket serverSocket;
-        private Socket socket;
-        private ServerPlayer player;
         private boolean running = false;
         private boolean connected = false;
         private String ip;
-        private int port;
-        private String username;
-        private String password;
-        private String uuid;
-        private String name;
 
         public CSWebsocketServer(String ip, int port) {
             this.ip = ip;
-            this.port = port;
-        }
-
-        public void start() {
-            try {
-                socketServer = new CSWebsocketServer("localhost", 8443);
-                LOGGER.info("WebSocket server started and listening on {}:{}", socketServer.getHost(), socketServer.getPort());
-
-                while (true) {
-                    CSWebsocketServer socket = socketServer.accept(); // accept incoming WebSocket connections
-                    LOGGER.info("Client connected: {}", socket.getRemoteSocketAddress());
-
-                    // Create input and output streams for the WebSocket
-                    DataInputStream in = new DataInputStream(socket.getInputStream());
-                    DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-
-                    // Read a UTF-8 encoded string from the client
-                    String message = in.readUTF();
-                    LOGGER.info("Received message from client: {}", message);
-
-                    // Write a UTF-8 encoded string to the client
-                    out.writeUTF("Hello from server!");
-
-                    // Close the input and output streams and the WebSocket
-                    in.close();
-                    out.close();
-                    socket.close();
-                }
-            } catch (IOException e) {
-                LOGGER.error("Failed to start WebSocket server", e);
-            }
         }
 
         private void close() {
         }
+
 
         private Object getPort() {
             return null;
@@ -170,18 +92,18 @@ public class Mindsigner {
         }
 
         public void stop() {
-            try {
-                if (connected) {
-                    socket.close();
-                }
-                serverSocket.close();
-                running = false;
-                connected = false;
-            } catch (IOException e) {
-                LOGGER.error("Failed to stop WebSocket server", e);
+            if (connected) {
+                socketServer.close();
             }
+            socketServer.close();
+            running = false;
+            connected = false;
+        }
+
+        public void start() {
         }
     }
+
 
     private void setup(final FMLCommonSetupEvent event) {
         LOGGER.info("HELLO FROM PREINIT");
@@ -204,52 +126,37 @@ public class Mindsigner {
 
     }
 
+
     @SubscribeEvent
     public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) throws IOException {
-        if (event.getPlayer() instanceof ServerPlayer) {
+        if (event.getPlayer() != null) {
             if (socketServer == null) {
                 // Create a new CSWebsocketServer object with the desired IP address and port number
                 socketServer = new CSWebsocketServer("localhost", 8443);
             }
             if (!socketServer.isRunning()) {
-                // Start the WebSocket server using the CSWebsocketServer object
-                socketServer.start();
-                TextComponent message = new TextComponent("WebSocket server started and listening on localhost:8080");
-                event.getPlayer().sendMessage(message, dummyUUID);
-            } else {
-                TextComponent message = new TextComponent("WebSocket server is already running");
-                event.getPlayer().sendMessage(message, dummyUUID);
+                // Start the WebSocket server using the CSWebsocketServer object on a separate thread
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        while (!Thread.currentThread().isInterrupted()) {
+                            try {
+                                Socket clientSocket = serverSocket.accept();
+                                // handle the new client connection here
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }
             }
         }
     }
+
+
 
     @SubscribeEvent
     public void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
-        if (event.getPlayer() instanceof ServerPlayer) {
-            if (socketServer != null && socketServer.isRunning()) {
-                TextComponent message = new TextComponent("WebSocket server stopped");
-                event.getPlayer().sendMessage(message, dummyUUID);
-            }
-        }
-        if (socketServer != null) {
-            try {
-                socketServer.stop();
-                LOGGER.info("WebSocket server stopped");
-            } catch (Exception e) {
-                LOGGER.error("Failed to stop websocket server", e);
-            }
-        }
     }
 
-    public void run() throws Exception {
-        while (!Thread.currentThread().isInterrupted()) {
-            // Handle incoming client connections and messages
-            // This could be done using the CraftSocketServer class or a separate class
-
-            // Add some statements here
-            // For example:
-            System.out.println("Waiting for clients...");
-            Thread.sleep(1000);
-        }
-    }
 }

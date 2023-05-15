@@ -12,13 +12,18 @@ public class CSEndpoint {
 
     private static final Set<Session> sessions = Collections.synchronizedSet(new HashSet<>());
 
+    public CSEndpoint() {
+    }
+
     @OnOpen
     public void onOpen(Session session) {
+
         sessions.add(session);
     }
 
     @OnClose
     public void onClose(Session session) {
+
         sessions.remove(session);
     }
 
