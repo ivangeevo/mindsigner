@@ -1,19 +1,19 @@
 package hive.ivangeevo.mindsigner.craftsocket;
 
+import com.mojang.blaze3d.audio.Channel;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpsConfigurator;
 import com.sun.net.httpserver.HttpsServer;
 import jakarta.websocket.*;
+
 import jakarta.websocket.server.ServerEndpoint;
+import jakarta.websocket.server.ServerEndpointConfig;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URI;
@@ -141,6 +141,17 @@ public class CSWebsocketServer {
     }
 
 
+    public InputStream getInputStream() throws IOException {
+        return null;
+    }
+
+    public OutputStream getOutputStream() throws IOException {
+        return null;
+    }
+
+    public SocketAddress getRemoteSocketAddress() {
+        return null;
+    }
 
     public void close() throws IOException {
     }

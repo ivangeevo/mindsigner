@@ -1,7 +1,6 @@
 
 package hive.ivangeevo.mindsigner;
 
-import jakarta.websocket.*;
 import net.minecraft.Util;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.level.block.Blocks;
@@ -18,10 +17,8 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.*;
-import java.net.InetAddress;
+import java.io.IOException;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -30,13 +27,8 @@ import java.util.stream.Collectors;
 @Mod.EventBusSubscriber(modid = "mindsigner", bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class Mindsigner {
     private static final Logger LOGGER = LogManager.getLogger(Mindsigner.class);
-    private static final UUID dummyUUID = UUID.randomUUID();
     private static CSWebsocketServer socketServer;
-
-
-
-
-
+    
 
     public Mindsigner() {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
@@ -46,44 +38,18 @@ public class Mindsigner {
         MinecraftForge.EVENT_BUS.register(this);
     }
 
-    public static class CSWebsocketServer extends Thread {
+
+    public static class CSWebsocketServer {
 
 
 
         private boolean running = false;
         private boolean connected = false;
-        private String ip;
 
         public CSWebsocketServer(String ip, int port) {
-            this.ip = ip;
         }
 
         private void close() {
-        }
-
-
-        private Object getPort() {
-            return null;
-        }
-
-        private Object getHost() {
-            return null;
-        }
-
-        private OutputStream getOutputStream() {
-            return null;
-        }
-
-        private InputStream getInputStream() {
-            return null;
-        }
-
-        private Throwable getRemoteSocketAddress() {
-            return null;
-        }
-
-        private CSWebsocketServer accept() {
-            return null;
         }
 
 
@@ -126,6 +92,29 @@ public class Mindsigner {
 
     }
 
+    public void start() {
+        ServerSocket serverSocket = null;
+        try {
+            int port = 8443;
+            String ip = "localhost";
+            serverSocket = new ServerSocket();
+            
+            // Rest of the code here
+        } catch (IOException e) {
+            LOGGER.error("Failed to start WebSocket server", e);
+        } finally {
+            if (serverSocket != null) {
+                try {
+                    serverSocket.close();
+                } catch (IOException e) {
+                    LOGGER.error("Error closing server socket", e);
+                }
+            }
+        }
+    }
+
+
+
 
     @SubscribeEvent
     public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) throws IOException {
@@ -139,16 +128,14 @@ public class Mindsigner {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        while (!Thread.currentThread().isInterrupted()) {
-                            try {
-                                Socket clientSocket = serverSocket.accept();
-                                // handle the new client connection here
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
+                        socketServer.start();
                     }
-                }
+                }).start();
+                TextComponent message = new TextComponent("WebSocket server started and listening on localhost:8443");
+                event.getPlayer().sendMessage(message, Util.NIL_UUID);
+            } else {
+                TextComponent message = new TextComponent("WebSocket server is already running");
+                event.getPlayer().sendMessage(message, Util.NIL_UUID);
             }
         }
     }
