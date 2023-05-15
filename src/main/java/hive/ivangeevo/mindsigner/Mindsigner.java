@@ -1,6 +1,7 @@
 
 package hive.ivangeevo.mindsigner;
 
+import hive.ivangeevo.mindsigner.craftsocket.CSWebsocketServer;
 import net.minecraft.Util;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.level.block.Blocks;
@@ -17,9 +18,9 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 
@@ -39,36 +40,7 @@ public class Mindsigner {
     }
 
 
-    public static class CSWebsocketServer {
 
-
-
-        private boolean running = false;
-        private boolean connected = false;
-
-        public CSWebsocketServer(String ip, int port) {
-        }
-
-        private void close() {
-        }
-
-
-        public boolean isRunning() {
-            return running;
-        }
-
-        public void stop() {
-            if (connected) {
-                socketServer.close();
-            }
-            socketServer.close();
-            running = false;
-            connected = false;
-        }
-
-        public void start() {
-        }
-    }
 
 
     private void setup(final FMLCommonSetupEvent event) {
@@ -92,13 +64,13 @@ public class Mindsigner {
 
     }
 
-    public void start() {
+    public void start(SSLContext sslContext) {
         ServerSocket serverSocket = null;
         try {
             int port = 8443;
             String ip = "localhost";
-            serverSocket = new ServerSocket();
-            
+            serverSocket = sslContext.getServerSocketFactory().createServerSocket(port);
+
             // Rest of the code here
         } catch (IOException e) {
             LOGGER.error("Failed to start WebSocket server", e);
@@ -115,30 +87,22 @@ public class Mindsigner {
 
 
 
-
     @SubscribeEvent
-    public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) throws IOException {
-        if (event.getPlayer() != null) {
-            if (socketServer == null) {
-                // Create a new CSWebsocketServer object with the desired IP address and port number
-                socketServer = new CSWebsocketServer("localhost", 8443);
-            }
-            if (!socketServer.isRunning()) {
-                // Start the WebSocket server using the CSWebsocketServer object on a separate thread
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        socketServer.start();
-                    }
-                }).start();
-                TextComponent message = new TextComponent("WebSocket server started and listening on localhost:8443");
-                event.getPlayer().sendMessage(message, Util.NIL_UUID);
-            } else {
-                TextComponent message = new TextComponent("WebSocket server is already running");
-                event.getPlayer().sendMessage(message, Util.NIL_UUID);
-            }
+    public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) throws Exception {
+        if (socketServer == null) {
+            SSLContext sslContext = socketServer.createSSLContext();
+            socketServer.start(sslContext);
+
+            TextComponent message = new TextComponent("WebSocket server started and listening on localhost:8443");
+            event.getPlayer().sendMessage(message, Util.NIL_UUID);
+        } else {
+            TextComponent message = new TextComponent("WebSocket server is already running");
+            event.getPlayer().sendMessage(message, Util.NIL_UUID);
         }
     }
+
+
+
 
 
 

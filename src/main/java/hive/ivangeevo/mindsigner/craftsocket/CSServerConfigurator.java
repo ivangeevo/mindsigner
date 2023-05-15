@@ -33,8 +33,7 @@ public class CSServerConfigurator extends ServerEndpointConfig.Configurator {
             CSWebsocketServer craftSocketServer = (CSWebsocketServer) getEndpointConfig().getUserProperties().get(CRAFT_SOCKET_SERVER_KEY);
 
             // Create a new CraftSocketEndpoint instance with the CraftSocketServer instance injected
-            CSEndpoint craftSocketEndpoint = new CSEndpoint();
-            craftSocketEndpoint.setCraftSocketServer(craftSocketServer);
+            CSEndpoint craftSocketEndpoint = new CSEndpoint(craftSocketServer);
             return (T) craftSocketEndpoint;
         } else {
             throw new InstantiationException("Invalid endpoint class: " + endpointClass);

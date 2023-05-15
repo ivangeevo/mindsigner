@@ -2,7 +2,7 @@ import fs from 'fs';
 import debug from 'debug';
 import dotenv from 'dotenv';
 import ioClient from 'socket.io-client';
-import { Client, PrivateKey } from '@hiveio/dhive';
+//import { Client, PrivateKey } from '@hiveio/dhive';
 
 // Load environment variables from a .env file
 dotenv.config();
@@ -11,7 +11,7 @@ dotenv.config();
 debug.enable(process.env.DEBUG || 'socket.io-client');
 
 // Enable debugging for the 'socket.io-client' module
-const socket = ioClient('wss://localhost:8443/websockets/', {
+const socket = ioClient('wss://localhost:8443/', {
 transports: ['websocket'],
 rejectUnauthorized: false,
 cert: fs.readFileSync('mycert.pem', 'utf8', { password: 'password' }),

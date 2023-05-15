@@ -1,6 +1,5 @@
 package hive.ivangeevo.mindsigner.craftsocket;
 
-import com.mojang.blaze3d.audio.Channel;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpsConfigurator;
@@ -8,48 +7,44 @@ import com.sun.net.httpserver.HttpsServer;
 import jakarta.websocket.*;
 
 import jakarta.websocket.server.ServerEndpoint;
-import jakarta.websocket.server.ServerEndpointConfig;
+import org.glassfish.tyrus.server.Server;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.*;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.logging.Logger;
 
+import java.util.HashMap;
+import java.util.Map;
 
-@ServerEndpoint(value = "/", configurator = CSServerConfigurator.class, subprotocols = {"protocol1", "protocol2"})
-public class CSWebsocketServer {
+import javax.net.ssl.SSLContext;
+
+import org.glassfish.tyrus.server.Server;
+
+
+@ServerEndpoint(value = "/CraftSocketEndpoint", configurator = CSServerConfigurator.class, subprotocols = {"protocol1", "protocol2"})
+public class CSWebsocketServer extends Server {
 
     private static final Logger LOGGER = Logger.getLogger(CSWebsocketServer.class.getName());
     private static final Set<Session> sessions = ConcurrentHashMap.newKeySet();
 
     private Session session;
 
-   private String host = new String("localhost");
-   private int port = 8443;
-
-    public CSWebsocketServer() {}
-
-    public CSWebsocketServer(Session session) {
-        this.session = session;
-    }
-
-    public void setSession(Session session) {
-        this.session = session;
+    public CSWebsocketServer() {
     }
 
     private HttpsServer createHttpsServer(InetSocketAddress address, SSLContext sslContext) throws IOException {
-        HttpsServer httpsServer = HttpsServer.create(address, 0);
+        HttpsServer httpsServer = HttpsServer.create(address, 10); // max backlog of 10
         httpsServer.setHttpsConfigurator(new HttpsConfigurator(sslContext));
         httpsServer.createContext("/");
         httpsServer.setExecutor(getThreadPoolExecutor());
@@ -97,72 +92,10 @@ public class CSWebsocketServer {
         ThreadFactory threadFactory = Executors.defaultThreadFactory();
         return new ThreadPoolExecutor(corePoolSize, maxPoolSize, keepAliveTime, unit, workQueue, threadFactory);
     }
-    public void stop() throws Exception {
-        for (Session session : sessions) {
-            session.close(new CloseReason(CloseReason.CloseCodes.GOING_AWAY, "Server shutting down"));
-        }
-        CSComponentProvider.FeatureImpl.TyrusEndpointPublisher serverEndpointPublisher = new CSComponentProvider.FeatureImpl.TyrusEndpointPublisher();
-        serverEndpointPublisher.stop();
-        LOGGER.info("CraftSocketServer stopped");
-    }
-
-    @OnOpen
-    public void onOpen(Session session, EndpointConfig endpointConfig) {
-        sessions.add(session);
-        LOGGER.info("New session opened: " + session.getId());
-    }
-
-    @OnClose
-    public void onClose(Session session, CloseReason closeReason) {
-        sessions.remove(session);
-        LOGGER.info("Session closed: " + session.getId() + ", Reason: " + closeReason);
-    }
-
-    @OnError
-    public void onError(Session session, Throwable throwable) {
-        LOGGER.severe("Error occurred in session: " + session.getId() + ", Error: " + throwable.getMessage());
-    }
-
-    @OnMessage
-    public void onMessage(String message, Session session) {
-        LOGGER.info("Received message from " + session.getId() + ": " + message);
-    }
-
-
-    public Session accept() throws IOException, DeploymentException, URISyntaxException {
-        WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-        return container.connectToServer(this, new URI("ws://" + host + ":" + port + "/CraftSocketEndpoint"));
-    }
-
-    private CSWebsocketServer(String host, int port, Session session) {
-        this.host = host;
-        this.port = port;
-        this.session = session;
-    }
-
-
-    public InputStream getInputStream() throws IOException {
-        return null;
-    }
-
-    public OutputStream getOutputStream() throws IOException {
-        return null;
-    }
-
-    public SocketAddress getRemoteSocketAddress() {
-        return null;
-    }
-
-    public void close() throws IOException {
-    }
-
-    public boolean isClosed() {
-        return false;
-    }
 
 
     // SSL Context configuration for the server
-    private SSLContext createSSLContext() throws Exception {
+    public SSLContext createSSLContext() throws Exception {
         char[] passphrase = "password".toCharArray();
         KeyStore ks = KeyStore.getInstance("PKCS12");
         InputStream is = getClass().getClassLoader().getResourceAsStream("keystore.p12");
@@ -188,4 +121,31 @@ public class CSWebsocketServer {
 
         return sslContext;
     }
+
+    public void handleMessage(String message) {
+        try {
+            CSEndpoint.sendToAllConnectedSessions(message);
+        } catch (IOException e) {
+            // Handle the exception
+        }
+    }
+
+    public boolean isRunning() {
+        return false;
+    }
+
+
+    public void start(SSLContext sslContext) {
+        try {
+            // Create new instance of server
+            Map<String, Object> properties = new HashMap<>();
+            Server server = new Server();
+
+            // Start the server
+            server.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }

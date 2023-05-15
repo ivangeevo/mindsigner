@@ -10,9 +10,14 @@ import java.util.Set;
 @ServerEndpoint(value = "/CraftSocketEndpoint")
 public class CSEndpoint {
 
+    private final CSWebsocketServer craftSocketServer;
+
+
+
     private static final Set<Session> sessions = Collections.synchronizedSet(new HashSet<>());
 
-    public CSEndpoint() {
+    public CSEndpoint(CSWebsocketServer craftSocketServer) {
+        this.craftSocketServer = craftSocketServer;
     }
 
     @OnOpen
@@ -34,8 +39,7 @@ public class CSEndpoint {
 
     @OnMessage
     public void onMessage(String message, Session session) throws IOException {
-        // Handle messages
-        sendToAllConnectedSessions(message);
+        craftSocketServer.handleMessage(message);
     }
 
     public void setCraftSocketServer(CSWebsocketServer craftSocketServer) {
@@ -43,7 +47,7 @@ public class CSEndpoint {
     }
 
 
-    private void sendToAllConnectedSessions(String message) throws IOException {
+    static void sendToAllConnectedSessions(String message) throws IOException {
         for (Session session : sessions) {
             if (session.isOpen()) {
                 session.getBasicRemote().sendText(message);
